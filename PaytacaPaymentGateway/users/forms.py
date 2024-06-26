@@ -1,12 +1,15 @@
-from django import forms
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
-# to add
-# edit profile - first name, last name
-class UserRegisterForm(UserCreationForm):
-    email = forms.EmailField()
+from .models import Account
+
+class AccountCreationForm(UserCreationForm):
 
     class Meta:
-        model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        model = Account
+        fields = ("username", "email")
+
+class AccountChangeForm(UserChangeForm):
+
+    class Meta:
+        model = Account
+        fields = ("username", "email")

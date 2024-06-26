@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .serializers import AccountSerializer
-from users.forms import UserRegisterForm
+# from users.forms import UserRegisterForm
 from rest_framework.authtoken.models import Token
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
@@ -24,15 +24,15 @@ class AccountViewAPI(APIView):
         serializer = AccountSerializer(user, many=True)
         return Response(serializer.data)
 
-class AccountCreateAPI(APIView):        
-    @csrf_exempt
-    def post(self, request):
-        form = UserRegisterForm(request.data)
-        if form.is_valid():
-            form.save()
-            return Response({'status': 'success'})
-        else:
-            return Response({'status': 'errors', 'errors': form.errors})
+# class AccountCreateAPI(APIView):        
+#     @csrf_exempt
+#     def post(self, request):
+#         form = UserRegisterForm(request.data)
+#         if form.is_valid():
+#             form.save()
+#             return Response({'status': 'success'})
+#         else:
+#             return Response({'status': 'errors', 'errors': form.errors})
 
 class AccountLoginAPI(APIView):
     def post(self, request):
