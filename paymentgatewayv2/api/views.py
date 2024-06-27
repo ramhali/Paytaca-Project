@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 
 from accounts.models import Account, Wallet
-from accounts.forms import AccountCreationForm, WalletUpdateForm
+from accounts.forms import AccountCreationForm, WalletUpdateForm, StoreCreationForm
 
 from . import serializers
 
@@ -49,7 +49,7 @@ class AccountLoginAPI(APIView):
             return Response({'status': 'errors', 'errors': 'Login Unsuccessful'})
         
 class AccountLogoutAPI(APIView):
-    def post(self, request):
+    def get(self, request):
         logout(request)
         return Response({'status':'Success'})
     
@@ -66,3 +66,17 @@ class WalletUpdateAPI(APIView):
             return Response({'status': 'success'})
         else:
             return Response({'status': 'errors', 'errors': wallet_form.errors})
+
+class StoreUpdateAPI(APIView):
+    permission_classes = [IsAuthenticated]     
+
+    def post(self, request):
+        store_form = StoreCreationForm(request.data)
+
+        if store_form.is_valid():
+            store = store_form.save(commit=False)
+            store.account = request.user
+            store.save()
+            return Response({'status': 'success'})
+        else:
+            return Response({'status': 'errors', 'errors': store_form.errors})

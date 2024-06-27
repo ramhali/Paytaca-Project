@@ -7,4 +7,5 @@ urlpatterns = [
     path('login/', views.AccountLoginAPI.as_view(), name="account-login"),
     path('logout/', views.AccountLogoutAPI.as_view(), name="account-logout"),
     path('account/wallet-info', views.WalletUpdateAPI.as_view(), name="wallet-update"),
+    path('account/store-info/update', views.StoreUpdateAPI.as_view(), name="store-update"),
 ]
