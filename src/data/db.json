@@ -1,0 +1,51 @@
+{
+  "users": [
+    {
+      "id": "e896",
+      "businessName": "test1",
+      "contactNumber": "test1",
+      "password": null,
+      "address": "test1",
+      "street": "test1",
+      "city": "test1",
+      "country": "test1",
+      "password1": "test1",
+      "password2": "test1"
+    },
+    {
+      "id": "926a",
+      "businessName": "test2",
+      "contactNumber": "test2",
+      "password1": "test2",
+      "password2": "test2",
+      "address": "test2",
+      "street": "test2",
+      "city": "test2",
+      "country": "test2"
+    },
+    {
+      "id": "4435",
+      "username": "asddsaas",
+      "businessName": "business name",
+      "contactNumber": "0929292020",
+      "password1": "asdddsad",
+      "password2": "asddas",
+      "address": "qwe",
+      "street": "ewq",
+      "city": "qwe",
+      "country": "wqe"
+    },
+    {
+      "id": "757d",
+      "username": "test3",
+      "businessName": "test3",
+      "contactNumber": "test3",
+      "password1": "test3",
+      "password2": "test3",
+      "address": "test3",
+      "street": "test3",
+      "city": "test3",
+      "country": "test3"
+    }
+  ]
+}
