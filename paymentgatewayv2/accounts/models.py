@@ -27,7 +27,19 @@ class Store(models.Model):
     store_url = models.CharField(max_length=255, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    account = models.ForeignKey(Account, related_name="store", on_delete=models.CASCADE)
+    account = models.OneToOneField(Account, related_name="store", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.store_name
+
+# TRANSACTIONS ------------
+
+class Transaction(models.Model):
+    amount_crypto = models.DecimalField(max_digits=10, decimal_places=8, default=0)
+    status = models.CharField(max_length=50)
+    created_at = models.DateTimeField()
+    store = models.ForeignKey(Store, related_name="store", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.account.username
+

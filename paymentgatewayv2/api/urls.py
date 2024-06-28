@@ -8,4 +8,7 @@ urlpatterns = [
     path('logout/', views.AccountLogoutAPI.as_view(), name="account-logout"),
     path('account/wallet-info', views.WalletUpdateAPI.as_view(), name="wallet-update"),
     path('account/store-info/update', views.StoreUpdateAPI.as_view(), name="store-update"),
+
+    path('pay/', views.PayRedirectAPIView.as_view(), name='pay_redirect'),
+    path('pay/redirected', views.PayAPIView.as_view(), name='pay'),
 ]

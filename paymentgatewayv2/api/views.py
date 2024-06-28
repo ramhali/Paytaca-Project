@@ -4,9 +4,14 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
-from accounts.models import Account, Wallet
+from accounts.models import Account
 from accounts.forms import AccountCreationForm, WalletUpdateForm, StoreCreationForm
+
+
+
 
 from . import serializers
 
@@ -80,3 +85,22 @@ class StoreUpdateAPI(APIView):
             return Response({'status': 'success'})
         else:
             return Response({'status': 'errors', 'errors': store_form.errors})
+
+
+class PayRedirectAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        params = {key: request.GET.get(key) for key in request.GET.keys()}
+        query_string = '?' + '&'.join([f'{key}={value}' for key, value in params.items()])
+        base_url = reverse('pay')
+        redirect_url = f'{base_url}{query_string}'
+
+        return HttpResponseRedirect(redirect_url)
+
+
+class PayAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        # Retrieve all query parameters from the request
+        query_params = {key: request.GET.get(key) for key in request.GET.keys()}
+
+        # Return all query parameters in the response
+        return Response(query_params)
