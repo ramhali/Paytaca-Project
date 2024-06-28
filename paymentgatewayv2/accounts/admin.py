@@ -11,11 +11,15 @@ class AccountAdmin(UserAdmin):
     add_form = AccountCreationForm
     form = AccountChangeForm
     model = Account
-    list_display = ["username", "get_wallet_id"]
+    list_display = ["username", "get_store_name", "get_wallet_id"]
 
     def get_wallet_id(self, obj):
         return obj.get_wallet_id()
     
+    def get_store_name(self, obj):
+        return obj.get_store_name()
+    
+    get_store_name.short_description = 'Store Name'
     get_wallet_id.short_description = 'Wallet ID'
 
 admin.site.register(Account, AccountAdmin)
