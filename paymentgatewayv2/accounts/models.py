@@ -4,7 +4,6 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class Account(AbstractUser):
-    business_name = models.CharField(max_length=255, default="")
     contact_number = models.CharField(max_length=255, default="")
 
     def __str__(self):
@@ -13,6 +12,7 @@ class Account(AbstractUser):
     def get_wallet_id(self):
         return self.wallet.id if hasattr(self, 'wallet') else None
     
+    
 class Wallet(models.Model):
     xpub_key = models.CharField(max_length=255, null=True)
     wallet_hash = models.CharField(max_length=255, null=True)
@@ -20,3 +20,26 @@ class Wallet(models.Model):
 
     def __str__(self):
         return self.account.username
+    
+class Store(models.Model):
+    store_name = models.CharField(max_length=255, null=False,)
+    store_type = models.CharField(max_length=255, null=True,)
+    store_url = models.CharField(max_length=255, null=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    account = models.OneToOneField(Account, related_name="store", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.store_name
+
+# TRANSACTIONS ------------
+
+class Transaction(models.Model):
+    amount_crypto = models.DecimalField(max_digits=10, decimal_places=8, default=0)
+    status = models.CharField(max_length=50)
+    created_at = models.DateTimeField()
+    store = models.ForeignKey(Store, related_name="store", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.account.username
+
