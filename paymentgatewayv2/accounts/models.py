@@ -12,6 +12,9 @@ class Account(AbstractUser):
     def get_wallet_id(self):
         return self.wallet.id if hasattr(self, 'wallet') else None
     
+    def get_store_name(self):
+        return self.store.store_name if hasattr(self, 'store') else None
+    
     
 class Wallet(models.Model):
     xpub_key = models.CharField(max_length=255, null=True)
