@@ -53,39 +53,46 @@
   const formRef = ref(null)
 
   const onSubmit = async () => {
+    // try {
+    //   console.log("User input: ",user.value);
+    //   const response = await axios.get(`http://localhost:3000/users`, {
+    //     params: {
+    //       businessName: user.value.username,
+    //       password: user.value.password
+    //     }
+    //   })
+
+    //   console.log("Response: ",JSON.stringify(response.data));
+    //   // if (response.data.length > 0) {
+    //   //   $q.notify({
+    //   //     type: 'positive',
+    //   //     message: 'Login successful!'
+    //   //   })
+    //   //   router.push('/home')
+    //   //   resetForm()
+    //   // }
+    //   // else {
+    //   //   $q.notify({
+    //   //     type: 'negative',
+    //   //     message: 'Invalid Input'
+    //   //   })
+    //   // }
+    //   router.push('/account')
+
+    // } catch (error) {
+
+    //     $q.notify({
+    //       type: 'negative',
+    //       message: 'Failed to Login'
+    //     })
+    //     onReset()
+    // }
+
     try {
-      console.log("User input: ",user.value);
-      const response = await axios.get(`http://localhost:3000/users`, {
-        params: {
-          businessName: user.value.username,
-          password: user.value.password
-        }
-      })
-
-      console.log("Response: ",JSON.stringify(response.data));
-      // if (response.data.length > 0) {
-      //   $q.notify({
-      //     type: 'positive',
-      //     message: 'Login successful!'
-      //   })
-      //   router.push('/home')
-      //   resetForm()
-      // }
-      // else {
-      //   $q.notify({
-      //     type: 'negative',
-      //     message: 'Invalid Input'
-      //   })
-      // }
-      router.push('/account')
-
+      const response = await axios.post('http://127.0.0.1:8000/login/')
+        
     } catch (error) {
 
-        $q.notify({
-          type: 'negative',
-          message: 'Failed to Login'
-        })
-        onReset()
     }
   }
 

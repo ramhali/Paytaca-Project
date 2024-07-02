@@ -8,6 +8,13 @@
           <h6 class="flex q-mb-none">Account Details</h6>
           <q-input
             filled
+            v-model="user.store_name"
+            label="Business Name"
+            stack-label
+            required
+          />
+          <q-input
+            filled
             v-model="user.username"
             label="Username"
             stack-label
@@ -31,6 +38,7 @@
             required
             hint="Re-type your password"
           />
+<!--
           <h6 class="flex q-mb-none">Business Details</h6>
           <q-input
             filled
@@ -39,7 +47,6 @@
             stack-label
             required
           />
-
           <q-input
             filled
             v-model="user.contactNumber"
@@ -47,8 +54,6 @@
             stack-label
             required
           />
-
-
           <q-input
             filled
             v-model="user.address"
@@ -56,7 +61,6 @@
             stack-label
             required
           />
-
           <q-input
             filled
             v-model="user.street"
@@ -64,7 +68,6 @@
             stack-label
             required
           />
-
           <q-input
             filled
             v-model="user.city"
@@ -72,14 +75,13 @@
             stack-label
             required
           />
-
           <q-input
             filled
             v-model="user.country"
             label="Country"
             stack-label
             required
-          />
+          /> -->
 
           <div>
             <q-btn class="full-width" label="Create Account" type="submit" color="accent"/>
@@ -111,34 +113,45 @@
 
   const user = ref({
     username:null,
-    businessName: null,
-    contactNumber: null,
+    store_name: null,
+    // contactNumber: null,
     password1: null,
     password2: null,
-    address: null,
-    street: null,
-    city: null,
-    country: null,
+    // address: null,
+    // street: null,
+    // city: null,
+    // country: null,
   })
 
   const onSubmit = async () => {
+    // try {
+    //   console.log(user.value.businessName, user.value.contactNumber, user.value.password1);
+    //   await axios.post('http://localhost:3000/users', user.value)
+    //   $q.notify({
+    //     type: 'positive',
+    //     icon: 'cloud_done',
+    //     message: 'User registered successfully!'
+    //   })
+    //   console.log(user.value.businessName, user.value.contactNumber, user.value.password1);
+    //   onReset()
+    //   router.push('/home')
+    // } catch (error) {
+    //   $q.notify({
+    //     type: 'negative',
+    //     message: 'Failed to register user'
+    //   })
+    //   onReset()
+    // }
+
     try {
-      console.log(user.value.businessName, user.value.contactNumber, user.value.password1);
-      await axios.post('http://localhost:3000/users', user.value)
-      $q.notify({
+      await axios.post('http://127.0.0.1:8000/register', user.value)
+        $q.notify({
         type: 'positive',
         icon: 'cloud_done',
         message: 'User registered successfully!'
       })
-      console.log(user.value.businessName, user.value.contactNumber, user.value.password1);
-      onReset()
-      router.push('/home')
     } catch (error) {
-      $q.notify({
-        type: 'negative',
-        message: 'Failed to register user'
-      })
-      onReset()
+
     }
   }
 
