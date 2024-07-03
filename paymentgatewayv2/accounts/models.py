@@ -37,8 +37,9 @@ class Store(models.Model):
 
 # TRANSACTIONS ------------
 
-class Transaction(models.Model):
-    amount_crypto = models.DecimalField(max_digits=10, decimal_places=8, default=0)
+# For the account model
+class Order(models.Model):
+    amount_crypto = models.DecimalField(max_digits=12, decimal_places=8, default=0)
     status = models.CharField(max_length=50)
     created_at = models.DateTimeField()
     store = models.ForeignKey(Store, related_name="store", on_delete=models.CASCADE)
@@ -46,3 +47,11 @@ class Transaction(models.Model):
     def __str__(self):
         return self.account.username
 
+
+# For global use --tracking
+class Transaction(models.Model):
+    token = models.CharField(max_length=100)
+    tx_id = models.CharField(max_length=100)
+    recipient = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=12, decimal_places=8, default=0)
+    created_at = models.DateTimeField()
