@@ -1,4 +1,6 @@
 import requests
+import random
+
 from decimal import Decimal
 
 from rest_framework.response import Response
@@ -8,13 +10,14 @@ from rest_framework.permissions import IsAuthenticated
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
 
 from hdwallet import HDWallet
 from hdwallet.symbols import BTC as SYMBOL
 from cashaddress import convert
 
-from accounts.models import Account
+from accounts.models import Account, Wallet, Transaction
 from accounts.forms import AccountCreationForm, WalletUpdateForm, StoreCreationForm
 
 from . import serializers
@@ -117,10 +120,23 @@ class PayAPIView(APIView):
         # convert total to BCH
         total_bch = Decimal(query_params['amount'])
         if bch_rate is not None:
-            total_bch /= round(Decimal(bch_rate), 8)
+            total_bch /= round(Decimal(bch_rate))
+
+        token = query_params.get('token')
+
+        if not token:
+            return HttpResponseBadRequest("Token is required")
+        
+        xpub_key = get_xpub_by_token(token)
+        index = get_random_number()
+        address = get_address_from_index(xpub_key, index)
+        wallet_hash = get_wallethash_by_token(token)
+
+        # track address
+        subscribe_address(address, index, wallet_hash)
 
         query_params["amount_bch"] = total_bch
-        query_params["bch_address"] = get_address_from_index(query_params['xpub'], query_params['index'])
+        query_params["address"] = address      
 
         # Return all query parameters in the response
         return Response(query_params)
@@ -128,12 +144,37 @@ class PayAPIView(APIView):
 
 ### HELPER FUNCTIONS ###
 
-# Get a new adress based on index
+# Get xpub & wallet hash of account using the token
+def get_xpub_by_token(token):
+    account = get_object_or_404(Account, token=token)
+    wallet = get_object_or_404(Wallet, account=account)
+
+    return wallet.xpub_key
+
+def get_wallethash_by_token(token):
+    account = get_object_or_404(Account, token=token)
+    wallet = get_object_or_404(Wallet, account=account)
+
+    return wallet.wallet_hash
+# ---------------------------------------------------------------
+
+# Generate a random number
+def get_random_number():
+    return random.randint(0, 2147483648)
+
+# Check if the address already exists in database
+def if_address_exists(address):
+    return Transaction.objects.filter(recipient=address).exists()
+
+# Get a new adress based on xpub and index
 def get_address_from_index(xpub, index):
-    wallet = HDWallet(symbol=SYMBOL, use_default_path=False)
-    result = wallet.from_xpublic_key(xpub).from_path("m/0/" + str(index)).dumps()
-    legacy_format = result['addresses']['p2pkh']
-    return convert.to_cash_address(legacy_format)
+    while True:
+        wallet = HDWallet(symbol=SYMBOL, use_default_path=False)
+        result = wallet.from_xpublic_key(xpub).from_path("m/0/" + str(index)).dumps()
+        legacy_format = result['addresses']['p2pkh']
+        
+        if not if_address_exists(convert.to_cash_address(legacy_format)):
+                return convert.to_cash_address(legacy_format)
 
 # Subscribe address to watchtower
 project_id = '2b99ac81-a956-4ca3-9bf1-fc5d7cba0dd1'
