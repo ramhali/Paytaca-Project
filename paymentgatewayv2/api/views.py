@@ -126,10 +126,30 @@ class PayAPIView(APIView):
         return Response(query_params)
     
 
+### HELPER FUNCTIONS ###
+
+# Get a new adress based on index
 def get_address_from_index(xpub, index):
     wallet = HDWallet(symbol=SYMBOL, use_default_path=False)
     result = wallet.from_xpublic_key(xpub).from_path("m/0/" + str(index)).dumps()
     legacy_format = result['addresses']['p2pkh']
     return convert.to_cash_address(legacy_format)
+
+# Subscribe address to watchtower
+project_id = '2b99ac81-a956-4ca3-9bf1-fc5d7cba0dd1'
+
+def subscribe_address(address, index, wallet_hash):
+    url = 'https://watchtower.cash/api/subscription/'
+    data = {
+        'addresses': {'receiving': address},
+        'project_id': project_id,
+        'wallet_hash': wallet_hash,
+        'address_index': index
+    }
+    success = False
+    resp = requests.post(url, json=data)
+    if resp.status_code == 200:
+        success = True
+    return success
 
 
