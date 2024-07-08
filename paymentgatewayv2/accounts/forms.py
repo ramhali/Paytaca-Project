@@ -26,10 +26,11 @@ class AccountChangeForm(UserChangeForm):
 
 class WalletUpdateForm(forms.ModelForm):
     xpub_key = forms.CharField()
+    wallet_hash = forms.CharField()
 
     class Meta:
         model = Wallet
-        fields = ('xpub_key',)
+        fields = ('xpub_key', 'wallet_hash')
 
 class StoreCreationForm(forms.ModelForm):
     store_name = forms.CharField()

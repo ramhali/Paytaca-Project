@@ -1,9 +1,17 @@
+import secrets
+import string
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 
 class Account(AbstractUser):
+    def generate_token(length=16): # identifier of accounts
+        characters = string.ascii_letters + string.digits
+        return ''.join(secrets.choice(characters) for i in range(length))
+    
+    token = models.CharField(max_length=32, unique=True, editable=False, default=generate_token)
     contact_number = models.CharField(max_length=255, default="")
 
     def __str__(self):

@@ -9,7 +9,7 @@ class AccountSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Account
-        fields = ['id', 'username', 'wallet_id']
+        fields = ['username', 'token','wallet_id']
 
 class WalletSerializer(serializers.ModelSerializer):
     class Meta:
