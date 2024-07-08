@@ -1,24 +1,142 @@
 <template>
-  <q-layout view="hHh Lpr fFf">
+  <q-layout view="hHh lpR lFf" >
+    <q-header elevated class="q-pa-sm flex">
+      <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" color="accent" />
+      <q-btn flat to="/account" class="hover-button q-py-sm">
+          <q-img src="/src/assets/images/paytaca_light.11fed42b.png" alt="Paytaca Logo" height="32px" width="160px"
+            style="padding-left: 1vw;" />
+      </q-btn>
+      <q-space></q-space>
+      <q-btn
+          label="Logout"
+          @click = logoutUser()
+          color="accent"
+          class="q-p-md"
+        />
+    </q-header>
 
-    <Header></Header>
+    <q-drawer v-model="leftDrawerOpen" side="left" overlay elevated>
+      <q-scroll-area class="fit">
+          <q-list>
+            <router-link to="/account" class="q-item-link">
+              <q-item clickable  v-ripple >
+              <q-item-section avatar>
+              <q-icon name="home" />
+              </q-item-section>
+              <q-item-section>Home</q-item-section>
+            </q-item>
+            </router-link>
+            <router-link to="/account/info" class="q-item-link">
+              <q-item clickable  v-ripple >
+              <q-item-section avatar>
+              <q-icon name="person" />
+              </q-item-section>
+              <q-item-section>Account info</q-item-section>
+            </q-item>
+            </router-link>
+            <router-link to="/account/transactions" class="q-item-link">
+              <q-item clickable  v-ripple >
+              <q-item-section avatar>
+              <q-icon name="person" />
+              </q-item-section>
+              <q-item-section>Transactions</q-item-section>
+            </q-item>
+            </router-link>
+              <q-separator/>
+            <q-item clickable  v-ripple @click="logoutUser">
+              <q-item-section avatar>
+              <q-icon name="logout" />
+              </q-item-section>
+              <q-item-section>Logout</q-item-section>
+            </q-item>
+          </q-list>
+        </q-scroll-area>
+    </q-drawer>
+
+
     <q-page-container class="bg-secondary">
+      <q-card>
+      <q-card-section>
+        <div class="text-h6">Welcome, {{ username }}!</div>
+      </q-card-section>
+    </q-card>
       <router-view />
     </q-page-container>
 
   </q-layout>
 </template>
 
-<script>
-import { ref } from 'vue'
-import Header from 'src/components/Header.vue';
+<script setup>
+import { ref, computed } from 'vue';
+import { api } from 'src/boot/axios';
+import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar'
+import { authStore } from 'src/stores/auth';
 
-export default {
-  name: 'AccountLayout',
-  components:{Header},
+const leftDrawerOpen = ref(false)
+const $q = useQuasar()
+const router = useRouter()
+const store = authStore()
 
-  setup () {
 
+const username = computed(() => store.user?.username );
+
+function toggleLeftDrawer(){
+  console.log(username);
+  leftDrawerOpen.value = !leftDrawerOpen.value
+}
+// async function logoutUser(){
+//   const response = await api.get('http://127.0.0.1:8000/logout')
+//     .then((response) => {
+//       console.log(response)
+//       router.push('/')
+//     })
+//     .catch(
+//       (error) => {
+//         console.log(error, error.message)
+//         $q.notify({
+//           type: 'negative',
+//           icon: 'error',
+//           message: `${error.message}`
+//         })
+//       }
+//     )
+//     .finally()
+// }
+
+async function logoutUser() {
+  try {
+    const response = await api.get('http://127.0.0.1:8000/logout');
+    console.log(response);
+    store.logout();
+
+    $q.notify({
+      type: 'positive',
+      icon: 'check',
+      message: `Logged out Successfully`,
+      timeout: 2000
+    });
+
+    router.push('/');
+  } catch (error) {
+    console.error('Logout error:', error);
+    $q.notify({
+      type: 'negative',
+      icon: 'error',
+      message: `${error.message}`,
+      timeout: 2000
+    });
   }
 }
+
 </script>
+
+<style scoped>
+.hover-button:hover{
+  background-color: rgb(231, 231, 230);
+}
+.q-item-link {
+  text-decoration: none;
+  color: inherit;
+}
+</style>

@@ -1,7 +1,11 @@
 <template>
   <q-page class="flex flex-center justify-center ">
-    <div>
-    <q-card class="q-pa-md text-center" style="max-width: 400px">
+    <div class="flex justify-center">
+      <q-card class="q-pa-md text-center bg-accent text-primary" style="width: 450px" color="accent">
+        <h3>Paytaca BCH Gateway</h3>
+        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officia odit corporis voluptate eos magni numquam. Provident assumenda dolore, autem maxime eveniet, cum culpa hic minima eum pariatur, ducimus fugit velit.</p>
+      </q-card>
+    <q-card class="q-pa-md text-center" style="width: 450px">
       <h5 class="q-mt-sm">Login</h5>
       <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
         <q-input
@@ -20,9 +24,8 @@
           required
         />
         <div>
-          <q-btn label="Login" type="submit" color="accent" class="full-width"/>
+          <q-btn class="full-width" label="Login" type="submit" color="accent"/>
         </div>
-
         <div class="form-bottom">
           <p>Don't have an account?
             <router-link to="register">
@@ -38,12 +41,14 @@
 
 <script setup>
   import { ref } from 'vue'
-  import axios from 'axios'
+  import {api} from 'boot/axios'
   import { useQuasar } from 'quasar'
   import { useRouter } from 'vue-router';
+  import { authStore } from 'src/stores/auth';
 
   const $q = useQuasar()
   const router = useRouter()
+  const store = authStore()
 
   const user = ref({
     username: null,
@@ -52,49 +57,81 @@
 
   const formRef = ref(null)
 
+  // const onSubmit = async () => {
+  //   try {
+  //     const response = await api.post('http://127.0.0.1:8000/login', user.value)
+  //       .then((response) => {
+  //         authStore.login(response.data.token, response.data.user)
+  //         console.log(response)
+  //         if(response.data.status !='errors'){
+
+  //           $q.notify({
+  //           type: 'positive',
+  //           icon: 'cloud_done',
+  //           message: 'User Login successfully!'
+  //           })
+
+  //           router.push('/account')
+  //         } else{
+  //           $q.notify({
+  //           type: 'negative',
+  //           icon: 'error',
+  //           message: `${response.data.errors}`
+  //           })
+  //         }
+
+  //       })
+  //       .catch(
+  //         (error) => {
+  //           console.log(error, error.message)
+  //           $q.notify({
+  //           type: 'negative',
+  //           icon: 'error',
+  //           message: `${error.message}`
+  //           })
+  //         }
+  //       )
+  //       .finally(
+  //         onReset()
+  //       )
+  //   }
+  //   catch (error) {
+  //   }
+  // }
+
   const onSubmit = async () => {
-    // try {
-    //   console.log("User input: ",user.value);
-    //   const response = await axios.get(`http://localhost:3000/users`, {
-    //     params: {
-    //       businessName: user.value.username,
-    //       password: user.value.password
-    //     }
-    //   })
-
-    //   console.log("Response: ",JSON.stringify(response.data));
-    //   // if (response.data.length > 0) {
-    //   //   $q.notify({
-    //   //     type: 'positive',
-    //   //     message: 'Login successful!'
-    //   //   })
-    //   //   router.push('/home')
-    //   //   resetForm()
-    //   // }
-    //   // else {
-    //   //   $q.notify({
-    //   //     type: 'negative',
-    //   //     message: 'Invalid Input'
-    //   //   })
-    //   // }
-    //   router.push('/account')
-
-    // } catch (error) {
-
-    //     $q.notify({
-    //       type: 'negative',
-    //       message: 'Failed to Login'
-    //     })
-    //     onReset()
-    // }
-
-    try {
-      const response = await axios.post('http://127.0.0.1:8000/login/')
-        
-    } catch (error) {
-
+  try {
+    const response = await api.post('http://127.0.0.1:8000/login', user.value);
+    console.log(response);
+    if (response.data.status !== 'errors') {
+      store.login(response.data.token, response.data.username);
+      console.log(response.data.username)
+      $q.notify({
+        type: 'positive',
+        icon: 'cloud_done',
+        message: 'User logged in successfully!',
+        timeout: 2000
+      });
+      router.push('/account');
     }
-  }
+    else {
+      $q.notify({
+        type: 'negative',
+        icon: 'error',
+        message: `${response.data.errors}`,
+        timeout: 2000
+      });
+    }
+    } catch (error) {
+      $q.notify({
+        type: 'negative',
+        icon: 'error',
+        message: `${error.message}`,
+        timeout: 2000
+      });
+    }
+  };
+
 
   const onReset = () => {
     user.value=ref(null)

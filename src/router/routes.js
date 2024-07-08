@@ -24,6 +24,17 @@ const routes = [
       {
         path: "/account",
         component: () => import("src/pages/Account.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: "/account/info",
+        component: () => import("src/pages/AccountInfo.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: "/account/transactions",
+        component: () => import("src/pages/Transactions.vue"),
+        meta: { requiresAuth: true },
       }
     ]
   },
