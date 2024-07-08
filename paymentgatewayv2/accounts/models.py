@@ -58,8 +58,11 @@ class Order(models.Model):
 
 # For global use --tracking
 class Transaction(models.Model):
-    token = models.CharField(max_length=100)
+    account_token = models.CharField(max_length=100)
+    transaction_token = models.CharField(max_length=100)
     tx_id = models.CharField(max_length=100)
     recipient = models.CharField(max_length=100)
-    amount = models.DecimalField(max_digits=12, decimal_places=8, default=0)
+    amount_fiat = models.CharField(max_length=100)
+    amount_bch = models.DecimalField(max_digits=12, decimal_places=8, default=0)
+    status = models.CharField(max_length=50)
     created_at = models.DateTimeField()

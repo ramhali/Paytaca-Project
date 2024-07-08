@@ -17,25 +17,21 @@ from hdwallet import HDWallet
 from hdwallet.symbols import BTC as SYMBOL
 from cashaddress import convert
 
-from accounts.models import Account, Wallet, Transaction
+from accounts.models import Account, Wallet, Store, Order, Transaction
 from accounts.forms import AccountCreationForm, WalletUpdateForm, StoreCreationForm
 
 from . import serializers
 
 class AccountViewAPI(APIView):
     def get(self, request):
-        requestData = request.data
-        username = requestData.get("username", None)
-
-        if username is not None:
-            user = Account.objects.get(username = username)
-            serializer = serializers.AccountSerializer(user)
-            return Response(serializer.data)
-    
-        user = Account.objects.all()
-        serializer = serializers.AccountSerializer(user, many=True)
+        user = request.user
+        account = get_object_or_404(Account, username=user)
+        
+        serializer = serializers.AccountSerializer(account)
         return Response(serializer.data)
-    
+
+        
+
 class AccountCreateAPI(APIView):        
     @csrf_exempt
     def post(self, request):
@@ -45,7 +41,8 @@ class AccountCreateAPI(APIView):
             return Response({'status': 'success'})
         else:
             return Response({'status': 'errors', 'errors': form.errors})
-        
+
+
 class AccountLoginAPI(APIView):
     def post(self, request):
         requestData = request.data
@@ -65,6 +62,7 @@ class AccountLogoutAPI(APIView):
         logout(request)
         return Response({'status':'Success'})
     
+
 class WalletUpdateAPI(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -78,6 +76,17 @@ class WalletUpdateAPI(APIView):
             return Response({'status': 'success'})
         else:
             return Response({'status': 'errors', 'errors': wallet_form.errors})
+
+    def get(self, request):
+        account = request.user
+        wallet = Wallet.objects.filter(account=account)
+        
+        if wallet.exists():
+            serializer = serializers.WalletSerializer(wallet, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({'status': 'Empty'})
+        
 
 class StoreUpdateAPI(APIView):
     permission_classes = [IsAuthenticated]     
@@ -93,6 +102,31 @@ class StoreUpdateAPI(APIView):
         else:
             return Response({'status': 'errors', 'errors': store_form.errors})
 
+    def get(self, request):
+        account = request.user
+        store = Store.objects.filter(account=account)
+        
+        if store.exists():
+            serializer = serializers.StoreSerializer(store, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({'status': 'Empty'})
+        
+
+# class OrderViewAPI(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         account = request.user
+#         store = Store.objects.filter(account=account)
+#         orders = Order.objects.filter(store__in=store)
+
+#         if orders.exists():
+#             serializer = serializers.OrderSerializer(orders, many=True)
+#             return Response(serializer.data)
+#         else:
+#             return Response({'status': 'Empty Transaction'})
+        
 
 class PayRedirectAPIView(APIView):
     def get(self, request, *args, **kwargs):
@@ -160,7 +194,7 @@ def get_wallethash_by_token(token):
 
 # Generate a random number
 def get_random_number():
-    return random.randint(0, 2147483648)
+    return random.randint(0, 2147483)
 
 # Check if the address already exists in database
 def if_address_exists(address):
