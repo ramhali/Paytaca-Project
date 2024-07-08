@@ -5,12 +5,13 @@ from rest_framework import serializers
 from accounts.models import Account, Wallet, Store, Order
 
 class AccountSerializer(serializers.ModelSerializer):
-    wallet_id = serializers.IntegerField(source='wallet.id', read_only=True)
+    xpub_key = serializers.CharField(source='wallet.xpub_key', read_only=True)
+    wallet_hash = serializers.CharField(source='wallet.wallet_hash', read_only=True)
     store_name = serializers.CharField(source='store.store_name', read_only=True)
     
     class Meta:
         model = Account
-        fields = ['username', 'token','wallet_id', 'store_name']
+        fields = ['username', 'token','xpub_key', 'wallet_hash', 'store_name']
 
 class WalletSerializer(serializers.ModelSerializer):
     class Meta:

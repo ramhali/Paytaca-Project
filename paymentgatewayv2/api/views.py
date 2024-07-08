@@ -2,6 +2,7 @@ import requests
 import random
 
 from decimal import Decimal
+from queue import Queue
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -162,7 +163,7 @@ class PayAPIView(APIView):
             return HttpResponseBadRequest("Token is required")
         
         xpub_key = get_xpub_by_token(token)
-        index = get_random_number()
+        index = 1
         address = get_address_from_index(xpub_key, index)
         wallet_hash = get_wallethash_by_token(token)
 
@@ -170,13 +171,29 @@ class PayAPIView(APIView):
         subscribe_address(address, index, wallet_hash)
 
         query_params["amount_bch"] = total_bch
-        query_params["address"] = address      
+        query_params["address"] = address 
 
-        # Return all query parameters in the response
+        # print(mqtt_container.get_queue_length())
+
         return Response(query_params)
     
 
 ### HELPER FUNCTIONS ###
+
+# class MQTTContainer:
+#     def __init__(self):
+#         self.queue = Queue()
+
+#     def add_message(self, message):
+#         self.queue.put(message)
+
+#     def get_message(self):
+#         return self.queue.get()
+
+#     def get_queue_length(self):
+#         return self.queue.qsize()
+    
+# mqtt_container = MQTTContainer()
 
 # Get xpub & wallet hash of account using the token
 def get_xpub_by_token(token):
