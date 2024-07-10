@@ -3,6 +3,8 @@ import paho.mqtt.client as mqtt
 import json
 import time
 
+from accounts.models import Transaction
+
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -13,7 +15,32 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
-    data = json.loads(msg.payload)
+    data = json.loads(msg.payload.decode('utf-8'))
+    transaction_token = data.get("token")
+    tx_id = data.get("txid")
+    recipient = data.get("recipient")
+    amount_bch = data.get("value")
+
+    # # Save the message to the database
+    # mqtt_message = Transaction(
+    #     transaction_token=transaction_token,
+    #     tx_id=tx_id,
+    #     recipient=recipient,
+    #     amount_bch=amount_bch
+    # )
+    # mqtt_message.save()
+    try:
+        transaction = Transaction.objects.only('recipient').get(recipient=recipient)
+
+        transaction.transaction_token = transaction_token
+        transaction.tx_id = tx_id
+        transaction.amount_bch = amount_bch
+        transaction.paid = True
+
+        transaction.save()
+    except Transaction.DoesNotExist:
+            print("Transaction with the specified recipient does not exist.")
+
     print(data)
 
 
