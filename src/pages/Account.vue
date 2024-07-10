@@ -9,7 +9,7 @@
 
           <vue-qrcode
             class="q-mb-sm"
-            :value="xKey"
+            :value="xpub_key"
             :size=300
             level="H"
           />
@@ -21,7 +21,7 @@
   </q-page>
 </template>
 
-<script>
+<!-- <script>
 import { useRouter } from 'vue-router';
 
 export default {
@@ -50,8 +50,21 @@ export default {
       }
       return result;
     }
-
-
   }
 }
+</script> -->
+<script setup>
+import { ref } from "vue";
+import { useRouter } from 'vue-router';
+
+
+  const router = useRouter()
+  const xpub_key = ref('');
+  const index = ref(0);
+  const address = ref('');
+
+function generateQrCode(){
+
+}
+
 </script>

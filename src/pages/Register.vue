@@ -126,7 +126,7 @@
   })
 
   const onSubmit = async () => {
-      const response = await api.post('http://127.0.0.1:8000/register', user.value)
+      const response = await api.post('register/', user.value)
         .then(
           (response) => {
           console.log(response)

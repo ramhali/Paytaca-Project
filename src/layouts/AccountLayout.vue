@@ -6,7 +6,11 @@
           <q-img src="/src/assets/images/paytaca_light.11fed42b.png" alt="Paytaca Logo" height="32px" width="160px"
             style="padding-left: 1vw;" />
       </q-btn>
-      <q-space></q-space>
+      <q-space/>
+      <!-- <div style="padding: 0" class="flex flex-center justify-center">
+        <label  style="color: #1e293b; padding: 0;">Welcome, {{username}}!</label>
+      </div> -->
+      <q-space/>
       <q-btn
           label="Logout"
           @click = logoutUser()
@@ -18,13 +22,19 @@
     <q-drawer v-model="leftDrawerOpen" side="left" overlay elevated>
       <q-scroll-area class="fit">
           <q-list>
+
+            <q-separator/>
+            <q-item>
+              <q-item-section>Welcome, {{username}}!</q-item-section>
+            </q-item>
+            <q-separator/>
             <router-link to="/account" class="q-item-link">
               <q-item clickable  v-ripple >
               <q-item-section avatar>
               <q-icon name="home" />
               </q-item-section>
               <q-item-section>Home</q-item-section>
-            </q-item>
+              </q-item>
             </router-link>
             <router-link to="/account/info" class="q-item-link">
               <q-item clickable  v-ripple >
@@ -32,7 +42,7 @@
               <q-icon name="person" />
               </q-item-section>
               <q-item-section>Account info</q-item-section>
-            </q-item>
+              </q-item>
             </router-link>
             <router-link to="/account/transactions" class="q-item-link">
               <q-item clickable  v-ripple >
@@ -40,7 +50,7 @@
               <q-icon name="view_list" />
               </q-item-section>
               <q-item-section>Transactions</q-item-section>
-            </q-item>
+              </q-item>
             </router-link>
               <q-separator/>
             <q-item clickable  v-ripple @click="logoutUser">
@@ -48,18 +58,14 @@
               <q-icon name="logout" />
               </q-item-section>
               <q-item-section>Logout</q-item-section>
-            </q-item>
+              </q-item>
           </q-list>
         </q-scroll-area>
     </q-drawer>
 
 
     <q-page-container class="bg-secondary">
-      <q-card>
-      <q-card-section>
-        <div class="text-h6">Welcome, {{ username }}!</div>
-      </q-card-section>
-    </q-card>
+
       <router-view />
     </q-page-container>
 
@@ -67,48 +73,26 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { api } from 'src/boot/axios';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar'
-import { authStore } from 'src/stores/auth';
+import { useAuthStore } from 'src/stores/auth';
 
 const leftDrawerOpen = ref(false)
 const $q = useQuasar()
 const router = useRouter()
-const store = authStore()
-
-
-const username = computed(() => store.user?.username );
+const authStore = useAuthStore();
+const username = authStore.getUser
 
 function toggleLeftDrawer(){
-  console.log(username);
   leftDrawerOpen.value = !leftDrawerOpen.value
 }
-// async function logoutUser(){
-//   const response = await api.get('http://127.0.0.1:8000/logout')
-//     .then((response) => {
-//       console.log(response)
-//       router.push('/')
-//     })
-//     .catch(
-//       (error) => {
-//         console.log(error, error.message)
-//         $q.notify({
-//           type: 'negative',
-//           icon: 'error',
-//           message: `${error.message}`
-//         })
-//       }
-//     )
-//     .finally()
-// }
 
-async function logoutUser() {
+ function logoutUser() {
   try {
-    const response = await api.get('http://127.0.0.1:8000/logout');
-    console.log(response);
-    store.logout();
+    api.get('http://127.0.0.1:8000/logout');
+    authStore.logout();
 
     $q.notify({
       type: 'positive',
