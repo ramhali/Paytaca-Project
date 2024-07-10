@@ -1,12 +1,13 @@
 import requests
 import random
+import json
 
 from decimal import Decimal
-from queue import Queue
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.models import Token
 
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
@@ -39,6 +40,7 @@ class AccountCreateAPI(APIView):
         form = AccountCreationForm(request.data)
         if form.is_valid():
             form.save()
+
             return Response({'status': 'success'})
         else:
             return Response({'status': 'errors', 'errors': form.errors})
@@ -54,7 +56,8 @@ class AccountLoginAPI(APIView):
         
         if user is not None:
             login(request, user)
-            return Response({'username': username, 'status': 'Login Success'})
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({'token': token.key, 'username': username, 'status': 'Login Success'})
         else:
             return Response({'status': 'errors', 'errors': 'Login Unsuccessful'})
         
@@ -114,28 +117,70 @@ class StoreUpdateAPI(APIView):
             return Response({'status': 'Empty'})
         
 
-# class OrderViewAPI(APIView):
-#     permission_classes = [IsAuthenticated]
+class OrderViewAPI(APIView):
+    permission_classes = [IsAuthenticated]
 
-#     def get(self, request):
-#         account = request.user
-#         store = Store.objects.filter(account=account)
-#         orders = Order.objects.filter(store__in=store)
+    def get(self, request):
+        account = request.user
 
-#         if orders.exists():
-#             serializer = serializers.OrderSerializer(orders, many=True)
-#             return Response(serializer.data)
-#         else:
-#             return Response({'status': 'Empty Transaction'})
+        transaction = Transaction.objects.only('account_token').filter(account_token=account.token)
+        if transaction.exists():
+            serializer = serializers.OrderSerializer(transaction, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({'status': 'Empty Transaction'})
         
 
 class PayRedirectAPIView(APIView):
     def get(self, request, *args, **kwargs):
         input_params = {key: request.GET.get(key) for key in request.GET.keys()}
+
+        bch_rate = None
+        try:
+            response = requests.get("https://api.coingecko.com/api/v3/simple/price", params={"ids": "bitcoin-cash", "vs_currencies": input_params['currency'].lower()})
+            response.raise_for_status()
+            bch_rate = response.json()["bitcoin-cash"][input_params['currency'].lower()]
+        except (requests.exceptions.RequestException, KeyError):
+            pass
+
+        total_fiat = input_params['amount']
+        # convert total to BCH
+        total_bch = Decimal(input_params['amount'])
+        if bch_rate is not None:
+            total_bch /= round(Decimal(bch_rate))
+
+        token = input_params.get('token')
+
+        if not token:
+            return HttpResponseBadRequest("Token is required")
+        
+        xpub_key = get_xpub_by_token(token)
+        index = get_random_number()
+        address = get_address_from_index(xpub_key, index)
+        wallet_hash = get_wallethash_by_token(token)
+
+        payment_currency = input_params.get('currency')
+
+        # track address
+        subscribe_address(address, index, wallet_hash)
+
+        input_params["amount_bch"] = total_bch
+        input_params["address"] = address
+
+        # save to database
+        mqtt_message = Transaction(
+            account_token=token,
+            recipient=address,
+            currency=payment_currency,
+            amount_fiat=total_fiat,
+            )
+        mqtt_message.save()
+
         query_string = '?' + '&'.join([f'{key}={value}' for key, value in input_params.items()])
         base_url = reverse('pay')
         redirect_url = f'{base_url}{query_string}'
 
+        
         return HttpResponseRedirect(redirect_url)
 
 
@@ -144,39 +189,18 @@ class PayAPIView(APIView):
         # Retrieve all query parameters from the request
         query_params = {key: request.GET.get(key) for key in request.GET.keys()}
 
-        bch_rate = None
-        try:
-            response = requests.get("https://api.coingecko.com/api/v3/simple/price", params={"ids": "bitcoin-cash", "vs_currencies": query_params['currency'].lower()})
-            response.raise_for_status()
-            bch_rate = response.json()["bitcoin-cash"][query_params['currency'].lower()]
-        except (requests.exceptions.RequestException, KeyError):
-            pass
-
-        # convert total to BCH
-        total_bch = Decimal(query_params['amount'])
-        if bch_rate is not None:
-            total_bch /= round(Decimal(bch_rate))
-
-        token = query_params.get('token')
-
-        if not token:
-            return HttpResponseBadRequest("Token is required")
-        
-        xpub_key = get_xpub_by_token(token)
-        index = 1
-        address = get_address_from_index(xpub_key, index)
-        wallet_hash = get_wallethash_by_token(token)
-
-        # track address
-        subscribe_address(address, index, wallet_hash)
-
-        query_params["amount_bch"] = total_bch
-        query_params["address"] = address 
-
-        # print(mqtt_container.get_queue_length())
-
-        return Response(query_params)
+        # return Response(query_params)
     
+        try:
+            transaction = Transaction.objects.only('paid').get(recipient=query_params['address'])
+            is_address_paid = transaction.paid
+
+            query_params['paid'] = is_address_paid
+
+            return Response(query_params)
+        
+        except Transaction.DoesNotExist:
+            return Response({'status': 'errors'})
 
 ### HELPER FUNCTIONS ###
 
@@ -218,14 +242,18 @@ def if_address_exists(address):
     return Transaction.objects.filter(recipient=address).exists()
 
 # Get a new adress based on xpub and index
-def get_address_from_index(xpub, index):
+def get_address_from_index(xpub, param_index):
+    index = param_index
     while True:
         wallet = HDWallet(symbol=SYMBOL, use_default_path=False)
-        result = wallet.from_xpublic_key(xpub).from_path("m/0/" + str(index)).dumps()
+        result = wallet.from_xpublic_key(xpub).from_path(f"m/0/{index}").dumps()
         legacy_format = result['addresses']['p2pkh']
         
         if not if_address_exists(convert.to_cash_address(legacy_format)):
-                return convert.to_cash_address(legacy_format)
+            return convert.to_cash_address(legacy_format)
+        
+        index = get_random_number()  # Get a new random index if address exists
+
 
 # Subscribe address to watchtower
 project_id = '2b99ac81-a956-4ca3-9bf1-fc5d7cba0dd1'

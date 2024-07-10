@@ -2,7 +2,7 @@
 # convert objects into data types render function can understand
 
 from rest_framework import serializers
-from accounts.models import Account, Wallet, Store, Order
+from accounts.models import Account, Wallet, Store, Transaction
 
 class AccountSerializer(serializers.ModelSerializer):
     xpub_key = serializers.CharField(source='wallet.xpub_key', read_only=True)
@@ -25,5 +25,5 @@ class StoreSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Order
+        model = Transaction
         fields = '__all__'

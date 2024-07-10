@@ -1,6 +1,8 @@
 import secrets
 import string
 
+from datetime import datetime, timedelta
+
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
@@ -58,11 +60,22 @@ class Order(models.Model):
 
 # For global use --tracking
 class Transaction(models.Model):
-    # account_token = models.CharField(max_length=100)
-    transaction_token = models.CharField(max_length=100)
-    tx_id = models.CharField(max_length=100)
-    recipient = models.CharField(max_length=100)
-    # amount_fiat = models.CharField(max_length=100)
-    amount_bch = models.DecimalField(max_digits=12, decimal_places=8, default=0)
-    # status = models.CharField(max_length=50)
+    account_token = models.CharField(max_length=100, default="x")
+    transaction_token = models.CharField(max_length=100, null=True)
+    tx_id = models.CharField(max_length=100, null=True)
+    recipient = models.CharField(max_length=100, default="x")
+    currency = models.CharField(max_length=100, default="PHP")
+    amount_fiat = models.CharField(max_length=100, default=0)
+    amount_bch = models.IntegerField(null=True)
+    paid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.recipient
+    
+    @classmethod
+    def delete_expired(cls):
+        thirty_minutes_ago = datetime.now() - timedelta(minutes=1)
+        cls.objects.filter(timestamp__lt=thirty_minutes_ago).delete()
+
+    
