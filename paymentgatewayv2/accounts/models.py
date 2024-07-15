@@ -29,6 +29,7 @@ class Account(AbstractUser):
 class Wallet(models.Model):
     xpub_key = models.CharField(max_length=255, null=True)
     wallet_hash = models.CharField(max_length=255, null=True)
+    is_connected = models.BooleanField(default=False)
     account = models.OneToOneField(Account, related_name="wallet", on_delete = models.CASCADE)
 
     def __str__(self):
@@ -63,12 +64,16 @@ class Transaction(models.Model):
     account_token = models.CharField(max_length=100, default="x")
     transaction_token = models.CharField(max_length=100, null=True)
     tx_id = models.CharField(max_length=100, null=True)
+    address_index = models.IntegerField(default=0)
     recipient = models.CharField(max_length=100, default="x")
     currency = models.CharField(max_length=100, default="PHP")
     amount_fiat = models.CharField(max_length=100, default=0)
-    amount_bch = models.IntegerField(null=True)
+    amount_bch = models.DecimalField(decimal_places=8, max_digits=12, null=True)
+    amount_paid = models.DecimalField(decimal_places=8, max_digits=12, null=True)
     paid = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    
 
     def __str__(self):
         return self.recipient

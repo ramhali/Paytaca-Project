@@ -16,7 +16,7 @@ class AccountSerializer(serializers.ModelSerializer):
 class WalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wallet
-        fields = ['xpub_key', 'wallet_hash']
+        fields = ['xpub_key', 'wallet_hash', 'is_connected']
 
 class StoreSerializer(serializers.ModelSerializer):
     class Meta:

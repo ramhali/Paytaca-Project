@@ -2,24 +2,26 @@ import requests
 import random
 import json
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
+from rest_framework.authentication import TokenAuthentication
 
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
+from django.db.models import Max
 
 from hdwallet import HDWallet
 from hdwallet.symbols import BTC as SYMBOL
 from cashaddress import convert
 
-from accounts.models import Account, Wallet, Store, Order, Transaction
+from accounts.models import Account, Wallet, Store, Transaction
 from accounts.forms import AccountCreationForm, WalletUpdateForm, StoreCreationForm
 
 from . import serializers
@@ -68,6 +70,7 @@ class AccountLogoutAPI(APIView):
     
 
 class WalletUpdateAPI(APIView):
+    authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -76,11 +79,28 @@ class WalletUpdateAPI(APIView):
         if wallet_form.is_valid():
             wallet = wallet_form.save(commit=False)
             wallet.account = request.user
+            wallet.is_connected = True
             wallet.save()
             return Response({'status': 'success'})
         else:
             return Response({'status': 'errors', 'errors': wallet_form.errors})
 
+    def put(self, request):
+        try:
+            wallet = Wallet.objects.get(account=request.user)
+        except Wallet.DoesNotExist:
+            return Response({'status': 'error', 'message': 'Wallet not found'}, status=404)
+        
+        wallet_form = WalletUpdateForm(request.data, instance=wallet)
+
+        if wallet_form.is_valid():
+            wallet = wallet_form.save(commit=False)
+            wallet.account = request.user
+            wallet.save()
+            return Response({'status': 'success'})
+        else:
+            return Response({'status': 'errors', 'errors': wallet_form.errors})
+        
     def get(self, request):
         account = request.user
         wallet = Wallet.objects.filter(account=account)
@@ -89,7 +109,7 @@ class WalletUpdateAPI(APIView):
             serializer = serializers.WalletSerializer(wallet, many=True)
             return Response(serializer.data)
         else:
-            return Response({'status': 'Empty'})
+            return Response({'status': 'Not connected'})
         
 
 class StoreUpdateAPI(APIView):
@@ -106,6 +126,22 @@ class StoreUpdateAPI(APIView):
         else:
             return Response({'status': 'errors', 'errors': store_form.errors})
 
+    def put(self, request):
+        try:
+            store = Store.objects.get(account=request.user)
+        except Store.DoesNotExist:
+            return Response({'status': 'error', 'message': 'Store not found'}, status=404)
+        
+        store_form = StoreCreationForm(request.data, instance=store)
+
+        if store_form.is_valid():
+            store = store_form.save(commit=False)
+            store.account = request.user
+            store.save()
+            return Response({'status': 'success'})
+        else:
+            return Response({'status': 'errors', 'errors': store_form.errors})
+        
     def get(self, request):
         account = request.user
         store = Store.objects.filter(account=account)
@@ -133,7 +169,7 @@ class OrderViewAPI(APIView):
 
 class PayRedirectAPIView(APIView):
     def get(self, request, *args, **kwargs):
-        input_params = {key: request.GET.get(key) for key in request.GET.keys()}
+        input_params = request.GET.dict()
 
         bch_rate = None
         try:
@@ -149,13 +185,18 @@ class PayRedirectAPIView(APIView):
         if bch_rate is not None:
             total_bch /= round(Decimal(bch_rate))
 
+            # round to 8 decimal places
+            total_bch = total_bch.quantize(Decimal('1.00000000'), rounding=ROUND_HALF_UP)
+
+            print(total_bch)
+
         token = input_params.get('token')
 
         if not token:
             return HttpResponseBadRequest("Token is required")
         
         xpub_key = get_xpub_by_token(token)
-        index = get_random_number()
+        index = get_available_address_index()
         address = get_address_from_index(xpub_key, index)
         wallet_hash = get_wallethash_by_token(token)
 
@@ -170,17 +211,22 @@ class PayRedirectAPIView(APIView):
         # save to database
         mqtt_message = Transaction(
             account_token=token,
+            address_index=index,
             recipient=address,
             currency=payment_currency,
             amount_fiat=total_fiat,
+            amount_bch=total_bch,
+            amount_paid=0
             )
         mqtt_message.save()
 
-        query_string = '?' + '&'.join([f'{key}={value}' for key, value in input_params.items()])
+        filtered_keys = ['desc', 'amount', 'currency', 'amount_bch', 'address']
+        filtered_params = {key: value for key, value in input_params.items() if key in filtered_keys}
+
+        query_string = '?' + '&'.join([f'{key}={value}' for key, value in filtered_params.items()])
         base_url = reverse('pay')
         redirect_url = f'{base_url}{query_string}'
 
-        
         return HttpResponseRedirect(redirect_url)
 
 
@@ -202,22 +248,12 @@ class PayAPIView(APIView):
         except Transaction.DoesNotExist:
             return Response({'status': 'errors'})
 
+
+# ---------------------------------------------------------------
+
 ### HELPER FUNCTIONS ###
 
-# class MQTTContainer:
-#     def __init__(self):
-#         self.queue = Queue()
-
-#     def add_message(self, message):
-#         self.queue.put(message)
-
-#     def get_message(self):
-#         return self.queue.get()
-
-#     def get_queue_length(self):
-#         return self.queue.qsize()
-    
-# mqtt_container = MQTTContainer()
+# ---------------------------------------------------------------
 
 # Get xpub & wallet hash of account using the token
 def get_xpub_by_token(token):
@@ -231,15 +267,20 @@ def get_wallethash_by_token(token):
     wallet = get_object_or_404(Wallet, account=account)
 
     return wallet.wallet_hash
+
 # ---------------------------------------------------------------
 
-# Generate a random number
-def get_random_number():
-    return random.randint(0, 2147483)
+# Get the available index
+def get_available_address_index():
+    index = Transaction.objects.aggregate(Max('address_index'))['address_index__max'] or 0
+    available_index = index+1
+    return available_index
 
-# Check if the address already exists in database
-def if_address_exists(address):
-    return Transaction.objects.filter(recipient=address).exists()
+# Check if the address already exists in database by using index
+def if_index_exists(value):
+    return Transaction.objects.filter(address_index=value).exists()
+
+# ----------------------------------------------------------------
 
 # Get a new adress based on xpub and index
 def get_address_from_index(xpub, param_index):
@@ -249,10 +290,10 @@ def get_address_from_index(xpub, param_index):
         result = wallet.from_xpublic_key(xpub).from_path(f"m/0/{index}").dumps()
         legacy_format = result['addresses']['p2pkh']
         
-        if not if_address_exists(convert.to_cash_address(legacy_format)):
+        if not if_index_exists(index):
             return convert.to_cash_address(legacy_format)
         
-        index = get_random_number()  # Get a new random index if address exists
+        index = index + 1  # Get a new random index if address exists
 
 
 # Subscribe address to watchtower
@@ -271,5 +312,4 @@ def subscribe_address(address, index, wallet_hash):
     if resp.status_code == 200:
         success = True
     return success
-
 
