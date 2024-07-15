@@ -14,6 +14,15 @@
 </template>
 
 <script setup>
+import { useAuthStore } from 'src/stores/auth';
+import { api } from 'src/boot/axios';
+
+const authStore = useAuthStore()
+
+const fetchTransactions = async () => {
+
+}
+// add currency column between after fiat
 const columns = [
   {
     name: 'index',
@@ -27,15 +36,9 @@ const columns = [
     align: 'left',
     field: row => row.name,
     format: val => `${val}`,
-    sortable: true
+    sortable: true,
+    classes: 'col-name'
   },
-  // { name: 'calories', align: 'center', label: 'Calories', field: 'calories', sortable: true },
-  // { name: 'fat', label: 'Fat (g)', field: 'fat', sortable: true },
-  // { name: 'carbs', label: 'Carbs (g)', field: 'carbs' },
-  // { name: 'protein', label: 'Protein (g)', field: 'protein' },
-  // { name: 'sodium', label: 'Sodium (mg)', field: 'sodium' },
-  // { name: 'calcium', label: 'Calcium (%)', field: 'calcium', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10) },
-  // { name: 'iron', label: 'Iron (%)', field: 'iron', sortable: true, sort: (a, b) => parseInt(a, 10) - parseInt(b, 10) }
 
   { name: 'txid', align: 'center', label: 'Transaction ID', field: 'txid' },
   { name: 'amount_fiat', align: 'center', label: 'Amount Fiat', field: 'amount_fiat', sortable:true},
@@ -44,7 +47,6 @@ const columns = [
   { name: 'date', align: 'center', label: 'Date', field: 'date'},
   { name: 'status', align: 'center', label: 'Status', field: 'status'},
 ]
-
 const rows = [
   {
     name: 'name1',
@@ -53,7 +55,7 @@ const rows = [
     amount_bch: 0.0005,
     recipient: 'recipient1',
     date:'10/30/20',
-    status:'Paid'
+    status:'Paid',
   },
   {
     name: 'name2',
@@ -126,5 +128,10 @@ rows.forEach((row, index) => {
 </script>
 
 <style>
-
+.col-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 </style>

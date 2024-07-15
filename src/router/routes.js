@@ -35,13 +35,19 @@ const routes = [
         path: "/account/transactions",
         component: () => import("src/pages/Transactions.vue"),
         meta: { requiresAuth: true },
-      },
+      }
+    ]
+  },
+  {
+    path: "",
+    component: () => import("layouts/PayLayout.vue"),
+    children: [
       {
-        path: "/account/payredirect",
+        path: "/pay/payredirect",
         component: () => import("src/pages/PayApi.vue"),
         // meta: { requiresAuth: true },
       }
-    ]
+    ],
   },
 
   // Always leave this as last one,

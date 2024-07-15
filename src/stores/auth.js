@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
-import { api } from 'src/boot/axios';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -38,28 +37,14 @@ export const useAuthStore = defineStore('auth', {
       this.user = user;
       localStorage.setItem('user', JSON.stringify(user));
     },
-     async fetchAccountData() {
-      try {
-        const response = await api.get('', {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Token ${this.token}`
-          },
-        })
-        this.account = response.data;
-
-        // console.log("Account: ",this.account)
-        // console.log("Response: ",response)
-
-      } catch (error) {
-        console.error('Error fetching account:', error)
-      }
-    },
+    getToken() {
+      return this.token
+    }
   },
   getters: {
     getUser() {
       return this.user || "User";
-    }
+    },
   },
 
 });
