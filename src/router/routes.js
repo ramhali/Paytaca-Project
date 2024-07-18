@@ -46,6 +46,11 @@ const routes = [
         path: "/pay/payredirect",
         component: () => import("src/pages/PayApi.vue"),
         // meta: { requiresAuth: true },
+      },
+      {
+        path: "/pay/",
+        component: () => import("src/pages/Pay.vue"),
+        // meta: { requiresAuth: true },
       }
     ],
   },

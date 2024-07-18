@@ -93,12 +93,15 @@
       });
     }
     } catch (error) {
-      $q.notify({
+      if (error.response.status === 401){
+        console.log("Incorrect username or password");
+        $q.notify({
         type: 'negative',
         icon: 'error',
-        message: `${error.message}`,
+        message: `Incorrect Username or Password`,
         timeout: 2000
       });
+      }
       console.log(error);
     }
   };

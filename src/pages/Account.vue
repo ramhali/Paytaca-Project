@@ -21,38 +21,6 @@
   </q-page>
 </template>
 
-<!-- <script>
-import { useRouter } from 'vue-router';
-
-export default {
-  name: 'PageName',
-  data() {
-    return {
-      xKey: " ",
-      walletHash: 'xpub661MyMwAqRbcFtFbBrD6e1nTx1KxvjqT4axHp6VLMiV5n1w7uTk34Jc4Ah1vcdTnoDd14KyyjZ3wwP4x9iFiUAMfCW4CgHbBrd5n74w2kLr',
-      num : null,
-      temp: null,
-      router: useRouter()
-    }
-  },
-  methods: {
-    generateQrCode: function () {
-      this.xKey = this.generateRandomString(120)
-      console.log("xKey: ",this.xKey);
-
-    },
-    generateRandomString: function (length){
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      let result = '';
-      const charactersLength = characters.length;
-      for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-      }
-      return result;
-    }
-  }
-}
-</script> -->
 <script setup>
 import { ref } from "vue";
 import { useRouter } from 'vue-router';
