@@ -51,9 +51,10 @@
             </q-card>
         </div>
     </q-page>
-  </template>
+</template>
 
-  <script>
+<script>
+
 export default {
   data() {
     return {

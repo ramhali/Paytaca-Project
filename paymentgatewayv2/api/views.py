@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 import random
 import json
@@ -15,7 +16,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
-from django.db.models import Max
+from django.core.cache import cache
 
 from hdwallet import HDWallet
 from hdwallet.symbols import BTC as SYMBOL
@@ -170,12 +171,16 @@ class OrderViewAPI(APIView):
 class PayRedirectAPIView(APIView):
     def get(self, request, *args, **kwargs):
         input_params = request.GET.dict()
+        currency = input_params['currency'].lower()
+        cache_key = f'bch_rate_{currency}'
+        bch_rate = cache.get(cache_key)
 
         bch_rate = None
         try:
-            response = requests.get("https://api.coingecko.com/api/v3/simple/price", params={"ids": "bitcoin-cash", "vs_currencies": input_params['currency'].lower()})
+            response = requests.get("https://api.coingecko.com/api/v3/simple/price", params={"ids": "bitcoin-cash", "vs_currencies": currency})
             response.raise_for_status()
-            bch_rate = response.json()["bitcoin-cash"][input_params['currency'].lower()]
+            bch_rate = response.json()["bitcoin-cash"][currency]
+            cache.set(cache_key, bch_rate, timeout=2*60)
         except (requests.exceptions.RequestException, KeyError):
             pass
 
@@ -196,8 +201,13 @@ class PayRedirectAPIView(APIView):
             return HttpResponseBadRequest("Token is required")
         
         xpub_key = get_xpub_by_token(token)
-        index = get_available_address_index()
-        address = get_address_from_index(xpub_key, index)
+        index = get_available_address_index(token)
+
+        try:
+            address = get_address_from_index(xpub_key, index)
+        except:
+            return Response({"error": "Invalid xPub Key"})
+        
         wallet_hash = get_wallethash_by_token(token)
 
         payment_currency = input_params.get('currency')
@@ -208,6 +218,9 @@ class PayRedirectAPIView(APIView):
         input_params["amount_bch"] = total_bch
         input_params["address"] = address
 
+        current_time = datetime.now()
+        input_params["created_at"] = current_time
+
         # save to database
         mqtt_message = Transaction(
             account_token=token,
@@ -216,11 +229,12 @@ class PayRedirectAPIView(APIView):
             currency=payment_currency,
             amount_fiat=total_fiat,
             amount_bch=total_bch,
-            amount_paid=0
+            amount_paid=0,
+            created_at=current_time
             )
         mqtt_message.save()
 
-        filtered_keys = ['desc', 'amount', 'currency', 'amount_bch', 'address']
+        filtered_keys = ['desc', 'amount', 'currency', 'amount_bch', 'address', 'created_at']
         filtered_params = {key: value for key, value in input_params.items() if key in filtered_keys}
 
         query_string = '?' + '&'.join([f'{key}={value}' for key, value in filtered_params.items()])
@@ -228,7 +242,7 @@ class PayRedirectAPIView(APIView):
         redirect_url = f'{base_url}{query_string}'
 
         return HttpResponseRedirect(redirect_url)
-
+        # return Response({'url': f'{base_url}{query_string}'})
 
 class PayAPIView(APIView):
     def get(self, request, *args, **kwargs):
@@ -271,9 +285,12 @@ def get_wallethash_by_token(token):
 # ---------------------------------------------------------------
 
 # Get the available index
-def get_available_address_index():
-    index = Transaction.objects.aggregate(Max('address_index'))['address_index__max'] or 0
-    available_index = index+1
+def get_available_address_index(token):
+    account = get_object_or_404(Account, token=token)
+
+    max_index_transaction = Transaction.objects.filter(account_token=account.token).order_by('-address_index').first()
+    max_index = max_index_transaction.address_index if max_index_transaction else 0
+    available_index = max_index + 1
     return available_index
 
 # Check if the address already exists in database by using index

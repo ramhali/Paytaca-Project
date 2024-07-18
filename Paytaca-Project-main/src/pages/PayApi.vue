@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <div class="q-pa-md column flex-center relative-center">
+    <div v-if="is_not_paid" class="q-pa-md column flex-center relative-center">
       <div class="column q-mb-md">
         <label>Scan the qr code below before the address expires</label>
       </div>
@@ -24,15 +24,23 @@
           <q-btn round color="accent" icon="content_copy" />
           <label><strong>{{ addressData }}</strong></label>
         </q-card-section> -->
+      
       <q-card class="my-card shadow-6">
-        <q-card-section class="q-pb-sm flex flex-center">
-          <vue-qrcode
-            class="q-mt-md"
-            :value="code"
-            :size=250
-            level="H"
-          />
-        </q-card-section>
+        
+          <q-card-section class="q-pb-sm flex flex-center">
+            <transition
+              appear
+              leave-active-class="animated flipOutY slower"
+            >
+            <vue-qrcode
+              class="q-mt-md"
+              :value="code"
+              :size=250
+              level="H"
+            />
+          </transition>
+          </q-card-section>
+        
 
         <q-card-section class="q-py-sm q-px-md row flex-center q-col-gutter-xs">
             <q-btn flat no-caps color="accent" icon="content_copy">
@@ -53,7 +61,28 @@
           <div class="text-subtitle1 flex flex-center text-weight-bold">BCH {{ amountData }}</div>
         </q-card-section>
       </q-card>
+    </div>
 
+    <div v-else class="q-pa-md column flex-center relative-center">
+      <div class="column q-mb-md">
+        <label>Transaction Done!</label>
+      </div>
+
+      <q-card class="my-card shadow-6">
+        <q-card-section class="q-pa-none">
+          <transition
+              appear
+              enter-active-class="animated flipInY slower"
+            >
+            <q-img src="/src/assets/images/paid_logo.png" alt="PAID" height="250px" width="250px"/>
+          </transition>
+        </q-card-section>
+
+        <q-card-section>
+          <div class="q-my-sm text-h6 flex flex-center text-weight-bolder" style="color: #39a848;"> Paytaca </div>
+          <div class="text-subtitle1 flex flex-center text-weight-regular" style="color: #39a848;"> Your Money, Your Control </div>
+        </q-card-section>
+      </q-card>
     </div>
   </q-page>
 </template>
@@ -70,6 +99,8 @@ let code = ref(null)
 
 const time = ref(120);
 const timer = ref(null);
+
+let is_not_paid = false
 
 const getResponse = async ()=>{
   const response = await api.get('http://localhost:8000/pay/redirected?amount=111.50&currency=PHP&desc=My%20First%20Order&amount_bch=0.005661047928513403736799350122&address=bitcoincash:qrwzzj6w3uq2ztp2h2gqergkvjf660h9wyg5exj6w9')

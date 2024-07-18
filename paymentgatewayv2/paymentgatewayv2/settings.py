@@ -49,7 +49,18 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = { 
     'DEFAULT_AUTHENTICATION_CLASSES': [ 
         'rest_framework.authentication.TokenAuthentication', 
-    ] 
+    ],
+
+    # rate limiting
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/day',
+        'anon': '10/minute',
+    } 
 }
 
 AUTH_USER_MODEL = "accounts.Account"

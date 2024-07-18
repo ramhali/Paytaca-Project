@@ -71,10 +71,14 @@ class Transaction(models.Model):
     amount_bch = models.DecimalField(decimal_places=8, max_digits=12, null=True)
     amount_paid = models.DecimalField(decimal_places=8, max_digits=12, null=True)
     paid = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField()
 
     
-
+    class Meta:
+        indexes = [
+            models.Index(fields=['address_index']),
+        ]
+        
     def __str__(self):
         return self.recipient
     
