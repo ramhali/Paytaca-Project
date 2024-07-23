@@ -1,4 +1,6 @@
 from datetime import datetime
+from django.db.models import Sum
+
 import requests
 import random
 import json
@@ -32,8 +34,18 @@ class AccountViewAPI(APIView):
         user = request.user
         account = get_object_or_404(Account, username=user)
         
-        serializer = serializers.AccountSerializer(account)
-        return Response(serializer.data)
+        account_serializer = serializers.AccountSerializer(account)
+
+        transaction = Transaction.objects.only('account_token').filter(account_token=account.token, paid=True).order_by('-created_at')
+        recent_transaction = transaction[:3]
+
+        transaction_count = transaction.count()
+        total_transaction_amount = transaction.aggregate(Sum('amount_bch'))['amount_bch__sum']
+
+        if transaction.exists():
+            table_serializer = serializers.OrderSerializer(recent_transaction, many=True)
+        
+        return Response({"account": account_serializer.data, "transaction_count": transaction_count, "amount_total": total_transaction_amount, "table": table_serializer.data})
 
         
 
@@ -160,40 +172,53 @@ class OrderViewAPI(APIView):
     def get(self, request):
         account = request.user
 
-        transaction = Transaction.objects.only('account_token').filter(account_token=account.token)
+        transaction = Transaction.objects.only('account_token').filter(account_token=account.token).order_by('-created_at')
         if transaction.exists():
             serializer = serializers.OrderSerializer(transaction, many=True)
             return Response(serializer.data)
         else:
             return Response({'status': 'Empty Transaction'})
         
+    def put(self, request):
+        address = request.data.get('address')
+        print(address)
+        try:
+            transaction = Transaction.objects.get(recipient=address)
+            # transaction.amount = new_amount_bch
+            currency = transaction.currency
+            amount = transaction.amount_fiat
+            transaction.amount_bch = get_bch_rate(currency, amount)
+            transaction.save()
+
+        except Transaction.DoesNotExist:
+            return Response({'status': 'error', 'message': 'Transaction not found'}, status=404)
+        
+        return Response({'updated_bch': transaction.amount_bch})
+
+    # def put(self, request):
+    #     try:
+    #         store = Store.objects.get(account=request.user)
+    #     except Store.DoesNotExist:
+    #         return Response({'status': 'error', 'message': 'Store not found'}, status=404)
+        
+    #     store_form = StoreCreationForm(request.data, instance=store)
+
+    #     if store_form.is_valid():
+    #         store = store_form.save(commit=False)
+    #         store.account = request.user
+    #         store.save()
+    #         return Response({'status': 'success'})
+    #     else:
+    #         return Response({'status': 'errors', 'errors': store_form.errors})    
+
 
 class PayRedirectAPIView(APIView):
     def get(self, request, *args, **kwargs):
         input_params = request.GET.dict()
-        currency = input_params['currency'].lower()
-        cache_key = f'bch_rate_{currency}'
-        bch_rate = cache.get(cache_key)
+        payment_currency = input_params.get('currency')
+        total_fiat = input_params.get('amount')
 
-        bch_rate = None
-        try:
-            response = requests.get("https://api.coingecko.com/api/v3/simple/price", params={"ids": "bitcoin-cash", "vs_currencies": currency})
-            response.raise_for_status()
-            bch_rate = response.json()["bitcoin-cash"][currency]
-            cache.set(cache_key, bch_rate, timeout=2*60)
-        except (requests.exceptions.RequestException, KeyError):
-            pass
-
-        total_fiat = input_params['amount']
-        # convert total to BCH
-        total_bch = Decimal(input_params['amount'])
-        if bch_rate is not None:
-            total_bch /= round(Decimal(bch_rate))
-
-            # round to 8 decimal places
-            total_bch = total_bch.quantize(Decimal('1.00000000'), rounding=ROUND_HALF_UP)
-
-            print(total_bch)
+        total_bch = get_bch_rate(payment_currency, total_fiat)
 
         token = input_params.get('token')
 
@@ -210,11 +235,12 @@ class PayRedirectAPIView(APIView):
         
         wallet_hash = get_wallethash_by_token(token)
 
-        payment_currency = input_params.get('currency')
+        
 
         # track address
         subscribe_address(address, index, wallet_hash)
 
+        
         input_params["amount_bch"] = total_bch
         input_params["address"] = address
 
@@ -270,6 +296,32 @@ class PayAPIView(APIView):
 # ---------------------------------------------------------------
 
 # Get xpub & wallet hash of account using the token
+def get_bch_rate(currency, amount):
+    currency = currency.lower()
+    cache_key = f'bch_rate_{currency}'
+    bch_rate = cache.get(cache_key)
+
+    bch_rate = None
+    try:
+        response = requests.get("https://api.coingecko.com/api/v3/simple/price", params={"ids": "bitcoin-cash", "vs_currencies": currency})
+        response.raise_for_status()
+        bch_rate = response.json()["bitcoin-cash"][currency]
+        cache.set(cache_key, bch_rate, timeout=2*60)
+    except (requests.exceptions.RequestException, KeyError):
+        pass
+
+    total_bch = Decimal(amount)
+    if bch_rate is not None:
+        total_bch /= round(Decimal(bch_rate))
+
+        # round to 8 decimal places
+        total_bch = total_bch.quantize(Decimal('1.00000000'), rounding=ROUND_HALF_UP)
+
+        print(total_bch)
+
+    return total_bch
+
+
 def get_xpub_by_token(token):
     account = get_object_or_404(Account, token=token)
     wallet = get_object_or_404(Wallet, account=account)
@@ -286,9 +338,7 @@ def get_wallethash_by_token(token):
 
 # Get the available index
 def get_available_address_index(token):
-    account = get_object_or_404(Account, token=token)
-
-    max_index_transaction = Transaction.objects.filter(account_token=account.token).order_by('-address_index').first()
+    max_index_transaction = Transaction.objects.filter(account_token=token).order_by('-address_index').first()
     max_index = max_index_transaction.address_index if max_index_transaction else 0
     available_index = max_index + 1
     return available_index
@@ -307,7 +357,7 @@ def get_address_from_index(xpub, param_index):
         result = wallet.from_xpublic_key(xpub).from_path(f"m/0/{index}").dumps()
         legacy_format = result['addresses']['p2pkh']
         
-        if not if_index_exists(index):
+        if not if_index_exists(param_index):
             return convert.to_cash_address(legacy_format)
         
         index = index + 1  # Get a new random index if address exists
