@@ -1,6 +1,6 @@
 <template>
   <q-page class="flex flex-center justify-center">
-    <q-form  @submit="submitForm">
+    <q-form v-if="!loading" @submit="submitForm">
       <div>
         <q-card style="min-width: 400px;">
           <q-card-section>
@@ -31,7 +31,7 @@
 
           <q-card-section>
             <label class="text-weight-bold">Currency</label>
-            <q-select
+            <!-- <q-select
               class="q-mx-md q-pb-none"
               v-model="urldata.currency"
               :options="options"
@@ -49,8 +49,16 @@
                 </q-item-section>
               </q-item>
             </template>
-            </q-select>
+            </q-select> -->
+            <q-input
+              class="q-mx-md q-pb-none"
+              v-model="urldata.currency"
+              outlined
+              required
+              :rules="[(val) => !!val || 'Amount cannot be empty']"
+            />
           </q-card-section>
+
           <q-card-section>
             <label class="text-weight-bold">Description</label>
             <q-input
@@ -69,28 +77,44 @@
         </q-card>
       </div>
     </q-form>
+    <q-spinner v-else>Loading</q-spinner>
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useQuasar } from 'quasar';
 import { useURLStore } from 'src/stores/urlstore';
 import { useRouter } from 'vue-router';
-import optionsData from 'src/assets/countries-info.json'
 
 const $q = useQuasar();
 const router = useRouter()
 const urlstore = useURLStore();
-const options = optionsData
+const loading = true
 
 const urldata = ref({
-  token: '4tDFHEJsPxLcCtvn',
+  token: '',
   amount: 0,
-  currency: options[167],
+  currency: '',
   desc: ''
 });
+
+const getQueryParams = async () => {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  const queryParams = Object.fromEntries(params);
+
+  console.log(url.search);
+  console.log(queryParams);
+
+  urldata.value.token = queryParams.token,
+  urldata.value.amount = queryParams.amount,
+  urldata.value.currency = queryParams.currency,
+  urldata.value.desc = queryParams.desc,
+
+  console.log(urldata.value);
+}
 
 const fetchURL = async () => {
   try {
@@ -98,14 +122,16 @@ const fetchURL = async () => {
       params: {
         token: urldata.value.token,
         amount: urldata.value.amount,
-        currency: urldata.value.currency['currency'],
+        currency: urldata.value.currency,
         desc: urldata.value.desc,
       }
     });
 
     const fetchedURL = response.data.url;
+
+    console.log("Fetched URL",fetchedURL);
     urlstore.storeURL(fetchedURL);
-    router.push('/pay/payredirect');
+    router.replace('/pay/payredirect');
 
     // $q.notify({ type: 'positive', message: 'URL fetched successfully!' });
   } catch (error) {
@@ -125,9 +151,10 @@ const submitForm = async (event) => {
 };
 
 
-// onMounted(()=>{
-//   console.log(options);
-// })
+onMounted(()=>{
+  getQueryParams()
+  fetchURL()
+})
 
 
 </script>
