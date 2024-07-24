@@ -13,7 +13,13 @@
           </div>
 
           <div>
-            <q-btn no-wrap class="justify-left text-capitalize" outline rounded color="accent" icon-right="start" label="Register to our payment gateway" />
+            <q-btn no-wrap 
+            class="justify-left text-capitalize" 
+            outline rounded 
+            color="accent" 
+            icon-right="start" 
+            label="Register to our payment gateway"
+            @click="$router.push('register')" />
           </div>
 
         </div>

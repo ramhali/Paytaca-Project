@@ -1,8 +1,7 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <Header/>
-      <q-page-container class="bg-secondary">
-      <!-- <q-page-container class="background-image"> -->
+    <q-page-container class="bg-secondary">
       <router-view />
     </q-page-container>
   </q-layout>
@@ -17,13 +16,3 @@ defineOptions({
 
 
 </script>
-
-<style>
-.background-image {
-  background-image: url('assets/images/Untitled design.png');
-  background-size: cover;
-  background-position: center;
-  width: 100%;
-  position: relative;
-}
-</style>

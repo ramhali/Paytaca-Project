@@ -1,63 +1,34 @@
 <template>
   <q-page padding>
-    <div v-if="is_not_paid" class="q-pa-md column flex-center relative-center">
+    <div v-if="!isPaid" class="q-pa-md column flex-center relative-center">
       <div class="column q-mb-md">
         <label>Scan the qr code below before the address expires</label>
       </div>
-      <!-- 
 
-      <q-card style="width:500px;" class="q-pa-xs q-mt-sm column shadow-7">
-        <q-card-section class="q-pb-xs flex flex-center">
-          <label class="text-bold">{{ descData }}</label>
-        </q-card-section>
-
-        <q-card-section class="flex flex-center">
-          <vue-qrcode
-            class="q-mb-sm"
-            :value="code"
-            :size=250
-            level="H"
-          />
-        </q-card-section>
-
-        <q-card-section class="q-px-md row flex-center q-col-gutter-xs">
-          <q-btn round color="accent" icon="content_copy" />
-          <label><strong>{{ addressData }}</strong></label>
-        </q-card-section> -->
-      
       <q-card class="my-card shadow-6">
-        
-          <q-card-section class="q-pb-sm flex flex-center">
-            <transition
-              appear
-              leave-active-class="animated flipOutY slower"
-            >
-            <vue-qrcode
-              class="q-mt-md"
-              :value="code"
-              :size=250
-              level="H"
-            />
+        <q-card-section class="q-pb-sm flex flex-center">
+          <transition appear leave-active-class="animated flipOutY slower">
+            <vue-qrcode v-if="code !== null" class="q-mt-md" :value="code" :size="250" level="H" />
           </transition>
-          </q-card-section>
-        
+        </q-card-section>
 
         <q-card-section class="q-py-sm q-px-md row flex-center q-col-gutter-xs">
-            <q-btn flat no-caps color="accent" icon="content_copy">
-              <div class="ellipsis" style="width: 200px">
-                {{ addressData }}
-              </div>
-            </q-btn>
+          <q-btn flat no-caps color="accent" icon="content_copy">
+            <div class="ellipsis" style="width: 200px">{{ addressData }}</div>
+          </q-btn>
         </q-card-section>
 
         <q-card-section class="q-pt-lg q-pb-xs">
           <div class="row items-center">
-            <q-linear-progress size="5px" :value="time/120" color="accent" class="q-mr-md" />
+            <q-linear-progress size="5px" :value="time / 120" color="accent" class="q-mr-md" />
+          </div>
+          <div class="row items-center">
+            {{ formattedTime }}
           </div>
         </q-card-section>
 
         <q-card-section>
-          <div class="q-my-sm text-h6 flex flex-center text-weight-regular"> {{ descData }}</div>
+          <div class="q-my-sm text-h6 flex flex-center text-weight-regular">{{ descData }}</div>
           <div class="text-subtitle1 flex flex-center text-weight-bold">BCH {{ amountData }}</div>
         </q-card-section>
       </q-card>
@@ -70,17 +41,14 @@
 
       <q-card class="my-card shadow-6">
         <q-card-section class="q-pa-none">
-          <transition
-              appear
-              enter-active-class="animated flipInY slower"
-            >
-            <q-img src="/src/assets/images/paid_logo.png" alt="PAID" height="250px" width="250px"/>
+          <transition appear enter-active-class="animated flipInY slower">
+            <q-img src="/src/assets/images/paid_logo.png" alt="PAID" height="250px" width="250px" />
           </transition>
         </q-card-section>
 
         <q-card-section>
-          <div class="q-my-sm text-h6 flex flex-center text-weight-bolder" style="color: #39a848;"> Paytaca </div>
-          <div class="text-subtitle1 flex flex-center text-weight-regular" style="color: #39a848;"> Your Money, Your Control </div>
+          <div class="q-my-sm text-h6 flex flex-center text-weight-bolder" style="color: #39a848;">Paytaca</div>
+          <div class="text-subtitle1 flex flex-center text-weight-regular" style="color: #39a848;">Your Money, Your Control</div>
         </q-card-section>
       </q-card>
     </div>
@@ -89,58 +57,96 @@
 
 <script setup>
 import { api } from 'src/boot/axios';
-import { onMounted, ref, computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useURLStore } from 'src/stores/urlstore';
 
-let addressData = ref(null)
-let amountData = ref(null)
-let descData = ref(null)
+const urlstore = useURLStore();
+const url = urlstore.getUrl;
 
-let code = ref(null)
+let addressData = ref(null);
+let amountData = ref(null);
+let descData = ref(null);
 
 const time = ref(120);
 const timer = ref(null);
+const pollTimer = ref(null);
 
-let is_not_paid = false
+let code = ref(null);
+let isPaid = ref(false);
 
-const getResponse = async ()=>{
-  const response = await api.get('http://localhost:8000/pay/redirected?amount=111.50&currency=PHP&desc=My%20First%20Order&amount_bch=0.005661047928513403736799350122&address=bitcoincash:qrwzzj6w3uq2ztp2h2gqergkvjf660h9wyg5exj6w9')
+const getResponse = async () => {
+  const response = await api.get(`${url}`);
+  addressData.value = response.data.address;
+  amountData.value = response.data.amount_bch;
+  descData.value = response.data.desc;
+  isPaid.value = response.data.paid;
 
-  addressData.value = response.data.address
-  amountData.value = response.data.amount_bch
-  descData.value = response.data.desc
+  console.log("Response Data:\n", response.data);
 
-  generateQrCode(addressData.value, amountData.value)
+  const currDate = new Date(response.data.created_at);
+  const expiryDate = new Date(currDate.getTime() + 2 * 60 * 1000);
+  const now = new Date();
+  const remainingTime = Math.max(0, Math.floor((expiryDate - now) / 1000));
+  time.value = remainingTime;
 
-  console.log("Code used to generate QR", response.data);
-}
+  console.log("Current Date: ", currDate);
+  console.log("Expiry Date: ", expiryDate);
 
-const generateQrCode = (addressData, amountData) => {
-  code.value = addressData + '?amount=' + amountData
-  console.log("Code used to generate QR", code.value);
-  startTimer()
-}
-
-const formattedTime = computed(() => { 
-  const minutes = Math.floor(time.value / 60); 
-  const seconds = time.value % 60; 
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`; 
-});
-
-const startTimer = () => { 
-  if (timer.value) return; // Prevent multiple intervals 
-  timer.value = setInterval(() => { 
-    if (time.value <= 0) { 
-      clearInterval(timer.value); 
-      timer.value = null; 
-    } else { 
-      time.value--; 
-    } 
-  }, 1000); 
+  startTimer(expiryDate);
+  generateQrCode(addressData.value, amountData.value);
 };
 
-onMounted (()=>{
-  getResponse()
-})
+const generateQrCode = (addressData, amountData) => {
+  code.value = `${addressData}?amount=${amountData}`;
+  console.log("Code used to generate QR", code.value);
+};
 
+const formattedTime = computed(() => {
+  const minutes = Math.floor(time.value / 60);
+  const seconds = time.value % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+});
 
+const startTimer = (endDate) => {
+  if (timer.value) return; // Prevent multiple intervals
+  timer.value = setInterval(() => {
+    const now = new Date();
+    const remainingTime = Math.max(0, endDate - now);
+    time.value = Math.floor(remainingTime / 1000);
+
+    if (remainingTime <= 0) {
+      clearInterval(timer.value);
+      timer.value = null;
+      urlstore.removeURL();
+    }
+  }, 1000);
+};
+
+const checkPaymentStatus = async () => {
+  const response = await api.get(`${url}`);
+  isPaid.value = response.data.paid;
+  if (isPaid.value) {
+    clearInterval(pollTimer.value);
+    pollTimer.value = null;
+  }
+};
+
+onMounted(() => {
+  getResponse();
+  pollTimer.value = setInterval(checkPaymentStatus, 5000); // Poll every 5 seconds
+});
+
+onUnmounted(() => {
+  clearInterval(timer.value);
+  clearInterval(pollTimer.value);
+  urlstore.removeURL();
+});
 </script>
+
+<style scoped>
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
