@@ -66,6 +66,7 @@ class Transaction(models.Model):
     tx_id = models.CharField(max_length=100, null=True)
     address_index = models.IntegerField(default=0)
     recipient = models.CharField(max_length=100, default="x")
+    order_id = models.CharField(max_length=100, null=True)
     currency = models.CharField(max_length=100, default="PHP")
     amount_fiat = models.CharField(max_length=100, default=0)
     amount_bch = models.DecimalField(decimal_places=8, max_digits=12, null=True)

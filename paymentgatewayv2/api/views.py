@@ -2,8 +2,6 @@ from datetime import datetime
 from django.db.models import Sum
 
 import requests
-import random
-import json
 
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -12,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import permission_classes
 
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
@@ -167,8 +166,7 @@ class StoreUpdateAPI(APIView):
         
 
 class OrderViewAPI(APIView):
-    permission_classes = [IsAuthenticated]
-
+    @permission_classes([IsAuthenticated])
     def get(self, request):
         account = request.user
 
@@ -225,6 +223,10 @@ class PayRedirectAPIView(APIView):
         if not token:
             return HttpResponseBadRequest("Token is required")
         
+        customer_order_id = input_params.get('order-id')
+        if not customer_order_id:
+            customer_order_id=""
+        
         xpub_key = get_xpub_by_token(token)
         index = get_available_address_index(token)
 
@@ -252,6 +254,7 @@ class PayRedirectAPIView(APIView):
             account_token=token,
             address_index=index,
             recipient=address,
+            order_id=customer_order_id,
             currency=payment_currency,
             amount_fiat=total_fiat,
             amount_bch=total_bch,
@@ -260,15 +263,23 @@ class PayRedirectAPIView(APIView):
             )
         mqtt_message.save()
 
-        filtered_keys = ['desc', 'amount', 'currency', 'amount_bch', 'address', 'created_at']
+        filtered_keys = ['desc',
+                         'order-id',
+                         'amount',
+                         'currency',
+                         'amount_bch',
+                         'address',
+                         'callback',
+                         'created_at']
+        
         filtered_params = {key: value for key, value in input_params.items() if key in filtered_keys}
 
         query_string = '?' + '&'.join([f'{key}={value}' for key, value in filtered_params.items()])
         base_url = reverse('pay')
         redirect_url = f'{base_url}{query_string}'
 
-        return HttpResponseRedirect(redirect_url)
-        # return Response({'url': f'{base_url}{query_string}'})
+        # return HttpResponseRedirect(redirect_url)
+        return Response({'url': f'{base_url}{query_string}'})
 
 class PayAPIView(APIView):
     def get(self, request, *args, **kwargs):
@@ -287,7 +298,43 @@ class PayAPIView(APIView):
         
         except Transaction.DoesNotExist:
             return Response({'status': 'errors'})
+        
+    def post(self, request):        
+        order_id = request.GET.get('order-id')
+        url = request.GET.get('callback')
+        if is_key_empty(order_id) or is_key_empty(url):
+            return Response({'message': 'Missing Parameters'})
+        
+        order = {
+            'order-id': order_id,
+            'status': 'PAID'
+        }
 
+        success = False
+        post = requests.post(url, json=order)
+        if post.status_code == 200: 
+            success = True
+        return success
+
+class testAPIView(APIView):
+    posted_data = []
+    
+    def post(self, request):
+        data = request.data
+        # Save the posted data to the class variable
+        testAPIView.posted_data.append(data)
+        return Response({'status': 'success', 'data': data})
+
+    def get(self, request):
+        # Return the saved posted data
+        if testAPIView.posted_data is not None:
+            return Response({'status': 'success', 'data': testAPIView.posted_data})
+        else:
+            return Response({'status': 'error', 'message': 'No data posted yet'}, status=404)
+     
+    
+
+    
 
 # ---------------------------------------------------------------
 
@@ -295,6 +342,9 @@ class PayAPIView(APIView):
 
 # ---------------------------------------------------------------
 
+def is_key_empty(key):
+    return key is None or key == ''
+    
 # Get xpub & wallet hash of account using the token
 def get_bch_rate(currency, amount):
     currency = currency.lower()
