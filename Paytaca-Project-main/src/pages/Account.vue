@@ -128,31 +128,31 @@ const columns = [
   { name: 'amount_fiat', align: 'left', label: 'Amount Fiat', field: 'amount_fiat', sortable: true, headerClasses: 'transparent header-text',
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'currency', align: 'left', label: 'Currency', field: 'currency', headerClasses: 'transparent header-text',
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'amount_bch', align: 'left', label: 'Amount (BCH)', field: 'amount_bch', sortable: true, headerClasses: 'transparent header-text' ,
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'recipient', align: 'left', label: 'Recipient', field: 'recipient', headerClasses: 'transparent header-text' ,
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'date', align: 'left', label: 'Date', field: 'created_at', format: formatDate, headerClasses: 'transparent header-text' ,
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
     },
 ];

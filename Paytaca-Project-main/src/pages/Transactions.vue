@@ -70,7 +70,7 @@ const columns = [
   },
   { name: 'order_id', align: 'center', label: 'Order ID', field: 'order_id',
     style: { 
-      fontSize: '1.2em' 
+      fontSize: '1em' 
     } 
   },
   { name: 'amount_fiat', align: 'center', label: 'Amount Fiat', field: 'amount_fiat', sortable: true,
@@ -80,17 +80,17 @@ const columns = [
   },
   { name: 'currency', align: 'center', label: 'Currency', field: 'currency',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'amount_bch', align: 'center', label: 'Amount (BCH)', field: 'amount_bch', sortable: true,
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'recipient', align: 'center', label: 'Recipient', field: 'recipient',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'date', align: 'center', label: 'Date', field: 'created_at', format: formatDate,
@@ -100,7 +100,7 @@ const columns = [
   },
   { name: 'status', align: 'center', label: 'Status', field: 'paid',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
 ];

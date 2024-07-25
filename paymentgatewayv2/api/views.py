@@ -234,11 +234,13 @@ class PayRedirectAPIView(APIView):
         if not return_url:
             return_url=""
 
-        xpub_key = get_xpub_by_token(token)
         index = get_available_address_index(token)
+        print("INDEX IS: ")
+        print(index)
+
 
         try:
-            address = get_address_from_index(xpub_key, index)
+            address = get_address_from_index(token, index)
         except:
             return Response({"error": "Invalid xPub Key"})
         
@@ -413,29 +415,47 @@ def get_wallethash_by_token(token):
 
 # Get the available index
 def get_available_address_index(token):
+    # try:
+    #     max_index_transaction = Transaction.objects.filter(account_token=token).order_by('-address_index').first()
+    #     max_index = max_index_transaction.address_index if max_index_transaction else 0
+    #     available_index = max_index + 1
+    #     return available_index
+    # except:
+    #     return 0
     max_index_transaction = Transaction.objects.filter(account_token=token).order_by('-address_index').first()
-    max_index = max_index_transaction.address_index if max_index_transaction else 0
-    available_index = max_index + 1
-    return available_index
-
+    print(max_index_transaction)
+    if max_index_transaction is not None:
+        print("max_index_transaction is not NONE!")
+        max_index = max_index_transaction.address_index
+        available_index = max_index + 1
+        print(available_index)
+        return available_index
+    else:
+        print("max_index_transaction is NONE!")
+        return 0
+        
 # Check if the address already exists in database by using index
-def if_index_exists(value):
-    return Transaction.objects.filter(address_index=value).exists()
+def if_index_exists(token_value, index_value):
+    return Transaction.objects.filter(account_token=token_value).filter(address_index=index_value).exists()
 
 # ----------------------------------------------------------------
 
 # Get a new adress based on xpub and index
-def get_address_from_index(xpub, param_index):
+def get_address_from_index(token, param_index):
     index = param_index
+    print("INSIDE get_address_from_index")
+    print(index)
     while True:
+        print("INSIDE TRUE")
         wallet = HDWallet(symbol=SYMBOL, use_default_path=False)
-        result = wallet.from_xpublic_key(xpub).from_path(f"m/0/{index}").dumps()
+        result = wallet.from_xpublic_key(get_xpub_by_token(token)).from_path(f"m/0/{index}").dumps()
         legacy_format = result['addresses']['p2pkh']
         
-        if not if_index_exists(param_index):
+        if not if_index_exists(token, index):
+            print("INSIDE if_index_exists")
             return convert.to_cash_address(legacy_format)
         
-        index = index + 1  # Get a new random index if address exists
+        index = index + 1 
 
 
 # Subscribe address to watchtower

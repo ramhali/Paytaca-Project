@@ -24,16 +24,17 @@
 
         </div>
 
-        <div class="row items-center q-pa-md col-4" style="width:300px; border: black 2px solid;">
-          <q-btn
-          class="full-width"
-          label="Im a button"
-          color="accent"
-          text-color="primary"
-          />
-          <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Adipisci ab soluta dolor officia ipsum dignissimos id iste debitis laudantium doloribus, amet voluptatibus. Magnam nemo delectus nulla mollitia, nihil officiis hic?</p>
+        <div class="row items-center q-pa-md col-4">
+            <img src="src/assets/images/home_pic.png" alt="Photo">
         </div>
       </div>
     </div>
   </q-page>
 </template>
+
+<style>
+.home {
+  background-image: url(/src/assets/images/home_pic.png);
+  background-size: cover;
+}
+</style>
