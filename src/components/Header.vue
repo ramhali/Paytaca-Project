@@ -1,11 +1,12 @@
 <template>
   <q-header elevated>
-    <q-toolbar class="bg-primary q-py-sm" >
+    <q-toolbar class="bg-primary q-py-sm q-px-md" >
       <q-btn class="hover-button q-py-sm" flat to="/">
-          <q-img src="/src/assets/images/paytaca_light.11fed42b.png" alt="Paytaca Logo" height="32px" width="160px"
-            style="padding-left: 1vw;" />
+          <q-img src="/src/assets/images/paytaca_light.11fed42b.png" alt="Paytaca Logo" height="32px" width="160px" />
       </q-btn>
+
       <q-space></q-space>
+
       <q-btn
         class="q-mr-md"
         color="accent"
@@ -14,6 +15,15 @@
         text-color="primary"
         @click="$router.push('login')"
       />
+
+      <q-btn
+        no-wrap
+        class="justify-left text-capitalize"
+        outline rounded color="accent"
+        icon-right="start"
+        label="Sign Up"
+        @click="$router.push('register')"
+       />
     </q-toolbar>
   </q-header>
 

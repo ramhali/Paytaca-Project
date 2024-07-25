@@ -135,9 +135,13 @@ const fetchAccountData = async () => {
       }
     });
 
-    xpub_key.value = response.data.xpub_key;
-    wallet_hash.value = response.data.wallet_hash;
-    user_token.value = response.data.token;
+    console.log("Response Data:", response.data.account);
+
+    xpub_key.value = response.data.account.xpub_key;
+    wallet_hash.value = response.data.account.wallet_hash;
+    user_token.value = response.data.account.token;
+
+    console.log("Xpub: ",xpub_key.value, "\nWallet Hash:", wallet_hash.value, "User Token:",user_token.value);
 
     const walletGet = await api.get('/account/wallet-info', {
       headers: {
@@ -227,6 +231,5 @@ const updateField = async (field, value) => {
 
 onMounted(() => {
   fetchAccountData();
-
 });
 </script>

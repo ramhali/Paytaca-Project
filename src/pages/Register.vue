@@ -118,11 +118,6 @@
     store_name: null,
     password1: null,
     password2: null,
-    // address: null,
-    // street: null,
-    // city: null,
-    // country: null,
-    // contactNumber: null,
   })
 
   const onSubmit = async () => {
@@ -137,7 +132,7 @@
             message: 'User Registered Successfully!',
             timeout: 2000
             })
-            router.push('/')
+            router.replace('/')
           }
           else{
             for (let index in response.data.errors.username){

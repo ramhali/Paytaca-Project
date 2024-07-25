@@ -4,7 +4,7 @@ import axios from 'axios';
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || null,
-    isLoggedIn: !!localStorage.getItem('token'),
+    isLoggedIn: false,
     user: JSON.parse(localStorage.getItem('user')) || null,
     account: {
       username: '',
@@ -24,6 +24,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('user', JSON.stringify(user));
       axios.defaults.headers.common['Authorization'] = `Token ${this.token}`;
       axios.defaults.headers.common['Content-Type'] = 'application/json';
+      console.log("Logged In")
     },
     logout() {
       this.token = null;
@@ -32,6 +33,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       delete axios.defaults.headers.common['Authorization'];
+      console.log("Logged Out")
     },
     setUser(user) {
       this.user = user;

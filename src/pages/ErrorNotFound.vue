@@ -14,7 +14,7 @@
         color="white"
         text-color="blue"
         unelevated
-        to="/"
+        :to= " isAuthenticated ? '/account' : '/' "
         label="Go Home"
         no-caps
       />
@@ -23,6 +23,7 @@
 </template>
 
 <script setup>
+const isAuthenticated = localStorage.getItem('token')
 defineOptions({
   name: 'ErrorNotFound'
 });

@@ -31,25 +31,7 @@
 
           <q-card-section>
             <label class="text-weight-bold">Currency</label>
-            <!-- <q-select
-              class="q-mx-md q-pb-none"
-              v-model="urldata.currency"
-              :options="options"
-              option-label="currency"
-              option-value="currency"
-              outlined
-              required
-              :rules="[(val) => !!val || 'Currency cannot be empty']"
-            >
-            <template v-slot:option="scope">
-              <q-item v-bind="scope.itemProps">
-                <q-item-section>
-                  <q-item-label>{{ scope.opt.currency }}</q-item-label>
-                  <q-item-label caption>{{ scope.opt.name }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </template>
-            </q-select> -->
+
             <q-input
               class="q-mx-md q-pb-none"
               v-model="urldata.currency"
@@ -67,12 +49,6 @@
               outlined
               autogrow
             />
-          </q-card-section>
-          <q-card-section>
-            <div class="flex flex-center">
-              <q-btn  label="Pay" type="submit" color="accent"
-                text-color="primary" no-caps />
-            </div>
           </q-card-section>
         </q-card>
       </div>
@@ -97,7 +73,9 @@ const urldata = ref({
   token: '',
   amount: 0,
   currency: '',
-  desc: ''
+  desc: '',
+  orderID: '',
+  callback: ''
 });
 
 const getQueryParams = async () => {
@@ -106,14 +84,16 @@ const getQueryParams = async () => {
   const queryParams = Object.fromEntries(params);
 
   console.log(url.search);
-  console.log(queryParams);
+  console.log("Query Params",queryParams);
 
-  urldata.value.token = queryParams.token,
-  urldata.value.amount = queryParams.amount,
-  urldata.value.currency = queryParams.currency,
-  urldata.value.desc = queryParams.desc,
+  urldata.value.token = queryParams.token;
+  urldata.value.amount = queryParams.amount;
+  urldata.value.currency = queryParams.currency;
+  urldata.value.desc = queryParams.desc;
+  urldata.value.orderID = queryParams.order_id;
+  urldata.value.callback = queryParams.callback;
 
-  console.log(urldata.value);
+  console.log(urldata.value.orderID);
 }
 
 const fetchURL = async () => {
@@ -124,6 +104,8 @@ const fetchURL = async () => {
         amount: urldata.value.amount,
         currency: urldata.value.currency,
         desc: urldata.value.desc,
+        order_id: urldata.value.orderID,
+        callback: urldata.value.callback
       }
     });
 
@@ -149,7 +131,6 @@ const submitForm = async (event) => {
     $q.notify({ type: 'negative', message: 'Payment failed!' });
   }
 };
-
 
 onMounted(()=>{
   getQueryParams()

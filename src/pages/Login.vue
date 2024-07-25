@@ -65,14 +65,13 @@
 
   const onSubmit = async () => {
   try {
-    const csrfToken = window.csrfToken
+    const csrfToken = window.csrfToken;
     const response = await api.post('login/', user.value, {
       headers: {
         'X-CSRFToken': csrfToken
       },
       withCredentials: true
     });
-    console.log(response.data);
 
     if (response.data.status !== 'errors') {
       authStore.login(response.data.token, response.data.username);
@@ -82,9 +81,8 @@
         message: 'User logged in successfully!',
         timeout: 2000
       });
-      router.push('/account');
-    }
-    else {
+      router.replace('/account'); 
+    } else {
       $q.notify({
         type: 'negative',
         icon: 'error',
@@ -92,19 +90,18 @@
         timeout: 2000
       });
     }
-    } catch (error) {
-      if (error.response.status === 401){
-        console.log("Incorrect username or password");
-        $q.notify({
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      $q.notify({
         type: 'negative',
         icon: 'error',
-        message: `Incorrect Username or Password`,
+        message: 'Incorrect Username or Password',
         timeout: 2000
       });
-      }
-      console.log(error);
     }
-  };
+    console.error(error);
+  }
+};
 
   const onReset = () => {
     user.value=ref(null)

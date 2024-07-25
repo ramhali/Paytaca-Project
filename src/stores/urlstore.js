@@ -16,7 +16,7 @@ export const useURLStore = defineStore('urlstore', {
     }
   },
   getters: {
-    getterUrl (){
+    getUrl (){
       // console.log("urlstore.js (getterURL): ",this.url);
       return this.url
     }

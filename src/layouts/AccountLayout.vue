@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR lFf" >
-    <q-header elevated class="q-pa-sm flex">
+    <q-header class="q-pa-sm flex">
       <q-btn dense flat round icon="menu" @click="toggleLeftDrawer" color="accent" />
       <q-btn flat to="/account" class="hover-button q-py-sm">
           <q-img src="/src/assets/images/paytaca_light.11fed42b.png" alt="Paytaca Logo" height="32px" width="160px"
@@ -11,12 +11,6 @@
         <label  style="color: #1e293b; padding: 0;">Welcome, {{username}}!</label>
       </div> -->
       <q-space/>
-      <q-btn
-          label="Logout"
-          @click = logoutUser()
-          color="accent"
-          class="q-p-md"
-        />
     </q-header>
 
     <q-drawer v-model="leftDrawerOpen" side="left" overlay elevated>
@@ -44,10 +38,20 @@
               <q-item-section>Account info</q-item-section>
               </q-item>
             </router-link>
+
+            <router-link to="/account/setup" class="q-item-link">
+              <q-item clickable  v-ripple >
+              <q-item-section avatar>
+              <q-icon name="tune" />
+              </q-item-section>
+              <q-item-section>Setting up</q-item-section>
+              </q-item>
+            </router-link>
+
             <router-link to="/account/transactions" class="q-item-link">
               <q-item clickable  v-ripple >
               <q-item-section avatar>
-              <q-icon name="view_list" />
+              <q-icon name="currency_bitcoin" />
               </q-item-section>
               <q-item-section>Transactions</q-item-section>
               </q-item>
