@@ -1,13 +1,20 @@
 <template>
   <q-page class="flex flex-center">
-    <q-card class="shadow-5 q-ma-xl q-pa-md">
+
+    <q-card v-if="!loading" class=" q-ma-xl q-pa-md">
       <div class="q-pa-md flex justify-center">
         <div class="table-container">
           <div class="table-title">
 
             Transactions
           </div>
+
+          <div v-if="data.status === 'Empty Transaction'" style="font-size: 1.5em; width: 600px;">
+            No Transactions...
+          </div>
+
           <q-table
+            v-else
             :rows="data"
             :columns="columns"
             row-key="id"
@@ -15,7 +22,6 @@
             draggable="false"
             class="large-text"
             style="border: 2px solid #eff6ff;"
-
           >
             <template v-slot:body-cell-tx_id="props">
               <q-td :props="props">
@@ -35,9 +41,12 @@
               </q-td>
             </template>
           </q-table>
-        </div>
-    </div>
+
+          </div>
+      </div>
     </q-card>
+
+    <q-spinner v-else size="lg" color="accent"> </q-spinner>
   </q-page>
 </template>
 
@@ -45,58 +54,71 @@
 import { useAuthStore } from 'src/stores/auth';
 import { api } from 'src/boot/axios';
 import { onMounted, ref } from 'vue';
-import { date } from 'quasar';
+
+
+const loading = ref(true);
 
 const authStore = useAuthStore();
 const token = authStore.getToken();
 const data = ref([]);
 
-const formatDate = (val) => date.formatDate(val, 'MM/DD/YYYY HH:mm:ss');
+
+const formatDate = (val) => {
+  const dateObj = new Date(val);
+  return dateObj.toLocaleString('en-US', {
+    timeZone: 'GMT', // or your preferred time zone
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};
 
 const columns = [
-  { name: 'tx_id', align: 'center', label: 'Transaction ID', field: 'tx_id', headerClasses: 'bg-grey-1 header-text',
-    classes: 'bg-grey-1',
+  { name: 'tx_id', align: 'center', label: 'Transaction ID', field: 'tx_id',
     style: {
-      fontSize: '1.2em'
+      fontSize: '1em'
     }
   },
-  { name: 'amount_fiat', align: 'center', label: 'Amount Fiat', field: 'amount_fiat', sortable: true, headerClasses: 'bg-grey-1 header-text',
-    classes: 'bg-grey-1',
+  { name: 'order_id', align: 'center', label: 'Order ID', field: 'order_id',
     style: {
-      fontSize: '1.2em'
+      fontSize: '1em'
     }
   },
-  { name: 'currency', align: 'center', label: 'Currency', field: 'currency', headerClasses: 'bg-grey-1 header-text',
-    classes: 'bg-grey-1',
+  { name: 'amount_fiat', align: 'center', label: 'Amount Fiat', field: 'amount_fiat', sortable: true,
     style: {
-      fontSize: '1.2em'
+      fontSize: '1em'
     }
   },
-  { name: 'amount_bch', align: 'center', label: 'Amount (BCH)', field: 'amount_bch', sortable: true, headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
+  { name: 'currency', align: 'center', label: 'Currency', field: 'currency',
     style: {
-      fontSize: '1.2em'
+      fontSize: '1em'
     }
   },
-  { name: 'recipient', align: 'center', label: 'Recipient', field: 'recipient', headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
+  { name: 'amount_bch', align: 'center', label: 'Amount (BCH)', field: 'amount_bch', sortable: true,
     style: {
-      fontSize: '1.2em'
+      fontSize: '1em'
     }
   },
-  { name: 'date', align: 'center', label: 'Date', field: 'created_at', format: formatDate, headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
+  { name: 'recipient', align: 'center', label: 'Recipient', field: 'recipient',
     style: {
-      fontSize: '1.2em'
+      fontSize: '1em'
     }
   },
-  { name: 'status', align: 'center', label: 'Status', field: 'paid', headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
+  { name: 'date', align: 'center', label: 'Date', field: 'created_at', format: formatDate,
     style: {
-      fontSize: '1.2em'
+      fontSize: '1em'
+    }
+  },
+  { name: 'status', align: 'center', label: 'Status', field: 'paid',
+    style: {
+      fontSize: '1em'
     }
   },
 ];
+
 
 const fetchTransactions = async () => {
   try {
@@ -106,6 +128,7 @@ const fetchTransactions = async () => {
         'Content-Type': 'application/json',
       }
     });
+    loading.value = false;
     data.value = response.data;
     console.log("Data: ", data.value);
   } catch (error) {

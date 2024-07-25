@@ -53,7 +53,7 @@
         </q-card>
       </div>
     </q-form>
-    <q-spinner v-else>Loading</q-spinner>
+    <q-spinner v-else size="lg">Loading</q-spinner>
   </q-page>
 </template>
 
@@ -67,7 +67,7 @@ import { useRouter } from 'vue-router';
 const $q = useQuasar();
 const router = useRouter()
 const urlstore = useURLStore();
-const loading = true
+const loading = ref(true)
 
 const urldata = ref({
   token: '',
@@ -75,7 +75,8 @@ const urldata = ref({
   currency: '',
   desc: '',
   orderID: '',
-  callback: ''
+  callback: '',
+  returnUrl: ''
 });
 
 const getQueryParams = async () => {
@@ -91,7 +92,8 @@ const getQueryParams = async () => {
   urldata.value.currency = queryParams.currency;
   urldata.value.desc = queryParams.desc;
   urldata.value.orderID = queryParams.order_id;
-  urldata.value.callback = queryParams.callback;
+  urldata.value.callback = queryParams.callback_url;
+  urldata.value.returnUrl = queryParams.return_url;
 
   console.log(urldata.value.orderID);
 }
@@ -105,7 +107,8 @@ const fetchURL = async () => {
         currency: urldata.value.currency,
         desc: urldata.value.desc,
         order_id: urldata.value.orderID,
-        callback: urldata.value.callback
+        callback_url: urldata.value.callback,
+        return_url: urldata.value.returnUrl
       }
     });
 
@@ -113,6 +116,7 @@ const fetchURL = async () => {
 
     console.log("Fetched URL",fetchedURL);
     urlstore.storeURL(fetchedURL);
+    loading.value=false;
     router.replace('/pay/payredirect');
 
     // $q.notify({ type: 'positive', message: 'URL fetched successfully!' });

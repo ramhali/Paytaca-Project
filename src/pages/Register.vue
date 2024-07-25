@@ -1,9 +1,18 @@
 <template>
   <q-page class="flex flex-center">
     <div class="flex justify-center">
-      <q-card class="q-pa-md text-center bg-accent text-primary" style="width: 450px" color="accent">
-        <h3>Paytaca BCH Gateway</h3>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officia odit corporis voluptate eos magni numquam. Provident assumenda dolore, autem maxime eveniet, cum culpa hic minima eum pariatur, ducimus fugit velit.</p>
+      <q-card class="q-pa-md text-justify bg-accent text-primary" style="width: 450px" color="accent">
+        <h3 class="text-center">Paytaca BCH Gateway</h3>
+        <!-- <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officia odit corporis voluptate eos magni numquam. Provident assumenda dolore, autem maxime eveniet, cum culpa hic minima eum pariatur, ducimus fugit velit.</p> -->
+         <p>
+          As the preferred choice for BCH enthusiasts globally, Paytaca is poised to lead the charge in introducing billions to the utility of BCH over traditional currencies, both fiat and crypto. With its unwavering commitment to accessibility, security, and innovation, Paytaca stands as the quintessential tool for navigating the evolving landscape of peer-to-peer digital transactions.
+         </p>
+         <p>
+          Empower your transactions.
+         </p>
+         <p>
+          <strong>Start accepting BCH today!</strong>
+         </p>
       </q-card>
 
       <q-card class="q-pa-md text-center" style="width: 450px">
@@ -174,3 +183,9 @@
     user.value=ref(null)
   }
 </script>
+
+<style scoped>
+p {
+  font-size: 1.2em;
+}
+</style>

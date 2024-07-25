@@ -135,7 +135,7 @@ const fetchAccountData = async () => {
       }
     });
 
-    console.log("Response Data:", response.data.account);
+    // console.log("Response Data:", response.data.account);
 
     xpub_key.value = response.data.account.xpub_key;
     wallet_hash.value = response.data.account.wallet_hash;

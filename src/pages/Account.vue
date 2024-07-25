@@ -77,6 +77,12 @@
         </q-card>
       </div>
     </div>
+
+    <div v-else class="flex flex-center justify-center">
+      <q-spinner  size="lg" color="accent" > </q-spinner>
+    </div>
+
+
   </q-page>
 </template>
 
@@ -84,7 +90,8 @@
 import { useAuthStore } from 'src/stores/auth';
 import { api } from 'src/boot/axios';
 import { onMounted, onUnmounted, ref } from 'vue';
-import { date } from 'quasar';
+
+/// -------------- VARIABLES ----------------- ///
 
 const loading = ref(true);
 
@@ -99,7 +106,18 @@ const resData = ref(null)
 const error = ref()
 const currentBCH = ref(error.value || "Loading....");
 
-const formatDate = (val) => date.formatDate(val, 'MM/DD/YYYY HH:mm:ss');
+const formatDate = (val) => {
+  const dateObj = new Date(val);
+  return dateObj.toLocaleString('en-US', {
+    timeZone: 'GMT',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+};
 
 const columns = [
   { name: 'tx_id', align: 'left', label: 'Transaction ID', field: 'tx_id', headerClasses: 'transparent header-text',
@@ -108,37 +126,45 @@ const columns = [
       fontSize: '1em'
     }
   },
+  { name: 'order_id', align: 'center', label: 'Order ID', field: 'order_id', headerClasses: 'transparent header-text',
+    classes: 'transparent',
+    style: {
+      fontSize: '1em'
+    }
+  },
   { name: 'amount_fiat', align: 'left', label: 'Amount Fiat', field: 'amount_fiat', sortable: true, headerClasses: 'transparent header-text',
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'currency', align: 'left', label: 'Currency', field: 'currency', headerClasses: 'transparent header-text',
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'amount_bch', align: 'left', label: 'Amount (BCH)', field: 'amount_bch', sortable: true, headerClasses: 'transparent header-text' ,
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'recipient', align: 'left', label: 'Recipient', field: 'recipient', headerClasses: 'transparent header-text' ,
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
   { name: 'date', align: 'left', label: 'Date', field: 'created_at', format: formatDate, headerClasses: 'transparent header-text' ,
     classes: 'transparent',
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
     },
 ];
+
+/// -------------- FUNCTIONS ----------------- ///
 
 const fetchTransactions = async () => {
   try {
@@ -176,7 +202,7 @@ const exchangeRates = async () => {
     });
     console.log("Exchange Rates: ", response.data);
     resData.value = response.data
-    currentBCH.value = '₱' + resData.value['bitcoin-cash'].php
+    currentBCH.value = '₱ ' + resData.value['bitcoin-cash'].php
     console.log("Current BCH to PHP: ", currentBCH.value);
 
   } catch (error) {
@@ -190,10 +216,13 @@ const pollData = () => {
   exchangeRates();
 };
 
+
+/// --------------------- LIFECYCLES -------------------- ///
+
 onMounted(() => {
   pollData();
   console.log("mounted");
-  pollTimer.value = setInterval(pollData, 60000); // Poll every 60 seconds
+  pollTimer.value = setInterval(pollData, 60000); // 60 seconds
 });
 
 onUnmounted(() => {
@@ -204,7 +233,7 @@ onUnmounted(() => {
 
 <style>
 .ellipsis {
-  max-width: 150px;
+  max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -139,6 +139,11 @@ const routes = [
         component: () => import("src/pages/Pay.vue"),
         // meta: { requiresAuth: true },
       },
+      {
+        path: "/test/",
+        name: "test",
+        component: () => import("src/pages/Test.vue"),
+      },
     ],
   },
   {

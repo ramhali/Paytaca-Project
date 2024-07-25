@@ -13,7 +13,7 @@
         </q-card-section>
 
         <q-card-section class="q-py-sm q-px-md row flex-center q-col-gutter-xs">
-          <q-btn flat no-caps color="accent" icon="content_copy">
+          <q-btn flat no-caps color="accent" icon="content_copy" @click="copyAddress">
             <div class="ellipsis" style="width: 200px">{{ addressData }}</div>
           </q-btn>
         </q-card-section>
@@ -41,13 +41,13 @@
 
       <q-card class="my-card shadow-6">
         <q-card-section class="q-pb-sm flex flex-center">
-          <transition appear leave-active-class="animated flipOutY slower">
-            <vue-qrcode v-if="code" class="q-mt-md" :value="code" :size="250" level="H" />
+          <transition appear enter-active-class="animated flipInY slower">
+            <q-img src="/src/assets/images/expired.png" alt="EXPIRED" height="250px" width="250px" />
           </transition>
         </q-card-section>
 
         <q-card-section class="q-py-sm q-px-md row flex-center q-col-gutter-xs">
-          <q-btn flat no-caps color="accent" icon="content_copy">
+          <q-btn flat no-caps color="accent" icon="content_copy" @click="copyAddress">
             <div class="ellipsis" style="width: 200px">{{ addressData }}</div>
           </q-btn>
         </q-card-section>
@@ -69,7 +69,6 @@
         <q-card-section class="flex flex-center">
           <q-btn label="Click to Update BCH value" @click="updateBCH" color="accent" text-color="primary" rounded />
         </q-card-section>
-
       </q-card>
     </div>
 
@@ -90,13 +89,15 @@
           <div class="text-subtitle1 flex flex-center text-weight-regular" style="color: #39a848;">Your Money, Your Control</div>
         </q-card-section>
       </q-card>
+      <div v-if="countdown > 0" class="q-my-sm text-h6 flex flex-center text-weight-regular">Redirecting in {{ countdown }} seconds...</div>
     </div>
   </q-page>
 </template>
 
+
 <script setup>
 import { api } from 'src/boot/axios';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useURLStore } from 'src/stores/urlstore';
 import { useQuasar } from 'quasar';
 
@@ -110,17 +111,18 @@ const timeSeconds = initTime / 1000;
 const addressData = ref(null);
 const amountData = ref(null);
 const descData = ref(null);
-const orderID = ref(null)
-const callback = ref(null)
+const orderID = ref(null);
+const callback = ref(null);
+const returnURL = ref(null);
 
 const time = ref(0);
 const timer = ref(null);
 const pollTimer = ref(null);
 
-// const progress = ref(null);
 const code = ref(null);
 const isPaid = ref(false);
 const isExpired = ref(false);
+const countdown = ref(0);
 
 const getResponse = async () => {
   try {
@@ -130,9 +132,8 @@ const getResponse = async () => {
     descData.value = response.data.desc;
     isPaid.value = response.data.paid;
     orderID.value = response.data.order_id;
-    callback.value = response.data.callback;
-
-    console.log("Response Data:\n", response.data);
+    callback.value = response.data.callback_url;
+    returnURL.value = response.data.return_url;
 
     const currDate = new Date(response.data.created_at);
     const expiryDate = new Date(currDate.getTime() + initTime); // 1.5 minutes expiry
@@ -140,21 +141,17 @@ const getResponse = async () => {
     const remainingTime = Math.max(0, Math.floor((expiryDate - now) / 1000));
     time.value = remainingTime;
 
-    console.log("Current Date: ", currDate);
-    console.log("Expiry Date: ", expiryDate);
-
     generateQrCode(addressData.value, amountData.value);
     startTimer(expiryDate);
-
-
   } catch (error) {
     console.error("Error fetching data:", error);
+    stopTimers(); // Stop timers on error
+    $q.notify({ type: 'negative', message: 'Failed to fetch data!' });
   }
 };
 
 const generateQrCode = (addressData, amountData) => {
   code.value = `${addressData}?amount=${amountData}`;
-  console.log("Code used to generate QR", code.value);
 };
 
 const formattedTime = computed(() => {
@@ -166,31 +163,22 @@ const formattedTime = computed(() => {
 const startTimer = (endDate) => {
   if (timer.value) return; // Prevent multiple intervals
 
-    timer.value = setInterval(() => {
+  timer.value = setInterval(() => {
     const now = new Date();
     const remainingTime = Math.max(0, endDate - now);
     time.value = Math.floor(remainingTime / 1000);
-
-    console.log("Remaining Time: ", remainingTime);
 
     if (remainingTime <= 0) {
       clearInterval(timer.value);
       timer.value = null;
       isExpired.value = true;
-      console.log("isExpired set to ", isExpired.value);
     }
   }, 1000);
-
-
 };
 
 const checkPaymentStatus = async () => {
   if (isExpired.value) {
-    // Stop checking if expired
-    if (pollTimer.value) {
-      clearInterval(pollTimer.value);
-      pollTimer.value = null;
-    }
+    stopTimers();
     return;
   }
 
@@ -199,42 +187,65 @@ const checkPaymentStatus = async () => {
     isPaid.value = response.data.paid;
 
     if (isPaid.value) {
-      clearInterval(pollTimer.value);
-      pollTimer.value = null;
-
-      const response2 = await api.post(`${url}`);
-
-      console.log("Paid Response",response2.data);
+      stopTimers();
     }
   } catch (error) {
-    $q.notify({ type: 'negative', message: 'Failed to check payment status!' });
     console.error("Error checking payment status:", error);
+    stopTimers();
+    $q.notify({ type: 'negative', message: 'Failed to check payment status!' });
   }
 };
 
 const updateBCH = async () => {
   try {
-    console.log("Address: ", addressData.value);
     isExpired.value = false;
-    console.log("isExpired set to ", isExpired.value);
 
     const response = await api.put('account/transactions/', { address: addressData.value });
-    console.log("updateBCH PUT request:", response.data);
 
-    amountData.value = response.data.value
+    if (response.data && response.data.updated_bch !== undefined) {
+      amountData.value = response.data.updated_bch;
+      generateQrCode(addressData.value, amountData.value);
 
-    generateQrCode(addressData.value,  amountData.value);
+      const curTime = new Date();
+      const newTime = new Date(curTime.getTime() + initTime);
 
-    const curTime = new Date();
-    const newTime = new Date(curTime.getTime() + initTime);
-    console.log("Current Time: ", curTime, "\nNew Time: ", newTime);
-
-    startTimer(newTime);
-
+      startTimer(newTime);
+    } else {
+      throw new Error("Unexpected response format");
+    }
   } catch (error) {
     console.error("Error in updateBCH PUT request:", error);
+    $q.notify({ type: 'negative', message: 'Failed to update BCH value!' });
   }
 };
+
+const copyAddress = () => {
+  navigator.clipboard.writeText(addressData.value).then(() => {
+    $q.notify({ type: 'positive', message: 'Address copied to clipboard!' });
+  }).catch(() => {
+    $q.notify({ type: 'negative', message: 'Failed to copy address!' });
+  });
+};
+
+const stopTimers = () => {
+  clearInterval(timer.value);
+  clearInterval(pollTimer.value);
+  timer.value = null;
+  pollTimer.value = null;
+};
+
+watch(isPaid, (newVal) => {
+  if (newVal && returnURL.value) {
+    countdown.value = 3;
+    const countdownInterval = setInterval(() => {
+      countdown.value -= 1;
+      if (countdown.value <= 0) {
+        clearInterval(countdownInterval);
+        window.location.href = returnURL.value;
+      }
+    }, 1000);
+  } else return
+});
 
 onMounted(() => {
   getResponse();
@@ -242,10 +253,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  clearInterval(timer.value);
-  clearInterval(pollTimer.value);
+  stopTimers();
   urlstore.removeURL();
 });
+
 
 </script>
 

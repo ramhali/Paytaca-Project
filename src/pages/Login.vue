@@ -2,12 +2,12 @@
   <q-page class="flex flex-center justify-center ">
     <div class="flex justify-center">
       <q-card
-        class="q-pa-md text-center bg-accent text-primary"
+        class="q-pa-md text-justify bg-accent text-primary"
         style="width: 450px"
         elevated
       >
-        <h3>Paytaca BCH Gateway</h3>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officia odit corporis voluptate eos magni numquam. Provident assumenda dolore, autem maxime eveniet, cum culpa hic minima eum pariatur, ducimus fugit velit.</p>
+        <h3 class="text-center">Paytaca BCH Gateway</h3>
+        <p>As the preferred choice for BCH enthusiasts globally, Paytaca is poised to lead the charge in introducing billions to the utility of BCH over traditional currencies, both fiat and crypto. </p>
       </q-card>
       <q-card
         class="q-pa-md text-center"
@@ -81,7 +81,7 @@
         message: 'User logged in successfully!',
         timeout: 2000
       });
-      router.replace('/account'); 
+      router.replace('/account');
     } else {
       $q.notify({
         type: 'negative',
@@ -108,3 +108,8 @@
   }
 </script>
 
+<style scoped>
+p {
+  font-size: 1.2em;
+}
+</style>
