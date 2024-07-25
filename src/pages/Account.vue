@@ -7,8 +7,8 @@
       </label>
       </div>
       <div class="dashboard q-my-lg row justify-evenly">
-        <q-card class="q-my-lg" flat >
-          <q-card-section class="q-pt-md q-pb-sm text-weight-bold"  style="width: 250px; background-color: #1e293b;  color: white;">
+        <q-card class="bch-value q-my-lg"  style="color: white;">
+          <q-card-section class="q-pt-md q-pb-sm text-weight-bold"  style="width: 250px;">
             BCH VALUE
           </q-card-section>
 
@@ -17,8 +17,8 @@
           </q-card-section>
         </q-card>
 
-        <q-card class="q-my-lg" flat>
-          <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 250px; background-color: #1e293b;  color: white;">
+        <q-card class="total-income q-my-lg"  style="color: white;">
+          <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 250px; ">
             TOTAL INCOME
           </q-card-section>
 
@@ -27,8 +27,8 @@
           </q-card-section>
         </q-card>
 
-        <q-card class="q-my-lg" flat>
-          <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 250px; background-color: #1e293b;  color: white;">
+        <q-card class="transactions q-my-lg"  style="color: white;">
+          <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 250px;">
             TRANSACTIONS COMPLETED
           </q-card-section>
 
@@ -243,7 +243,19 @@ onUnmounted(() => {
 }
 
 .dashboard {
-  font-size: 1.2em;
+  /* font-size: 1 em; */
   font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+.transactions {
+  background-image: url(/src/assets/images/transaction_total.png);
+  background-size: cover;
+}
+.total-income {
+  background-image: url(/src/assets/images/income_total.png);
+  background-size: cover;
+}
+.bch-value {
+  background-image: url(/src/assets/images/bch_logo.png);
+  background-size: cover;
 }
 </style>
