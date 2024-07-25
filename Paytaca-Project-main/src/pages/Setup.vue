@@ -169,7 +169,7 @@
                 ],
                 additionalRows: [
                 {
-                    name: 'order-id',
+                    name: 'order_id',
                     desc: "The unique identifier of the order or product. Once the transaction is completed, this identifier will be marked as paid and sent as a POST request",
                     ex: 'Order-12345' 
                 },
@@ -179,14 +179,14 @@
                     ex: 'Value Meal'
                 },
                 {
-                    name: 'callback-url',
+                    name: 'callback_url',
                     desc: 'The URL to which the POST request will be sent once the transaction is completed',
-                    ex: 'http://localhost:9000/'
+                    ex: 'http://localhost:9000/test'
                 },
                 {
-                    name: 'return-url',
+                    name: 'return_url',
                     desc: 'The URL to which the customers will be redirected once the transaction is completed',
-                    ex: 'http://localhost:9000/landing/'
+                    ex: 'http://localhost:9000/test/landing'
                 },
                 ]
             };

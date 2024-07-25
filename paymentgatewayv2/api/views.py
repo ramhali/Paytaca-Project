@@ -213,6 +213,7 @@ class OrderViewAPI(APIView):
 class PayRedirectAPIView(APIView):
     def get(self, request, *args, **kwargs):
         input_params = request.GET.dict()
+        print(input_params)
         payment_currency = input_params.get('currency')
         total_fiat = input_params.get('amount')
 
@@ -223,10 +224,15 @@ class PayRedirectAPIView(APIView):
         if not token:
             return HttpResponseBadRequest("Token is required")
         
-        customer_order_id = input_params.get('order-id')
-        if not customer_order_id:
-            customer_order_id=""
+        customer_order_id = input_params.get('order_id')
+        callback_url = input_params.get('callback_url')
+        return_url = input_params.get('return_url')
         
+        check_return_parameters(customer_order_id, callback_url)
+
+        if not return_url:
+            return_url=""
+
         xpub_key = get_xpub_by_token(token)
         index = get_available_address_index(token)
 
@@ -264,12 +270,13 @@ class PayRedirectAPIView(APIView):
         mqtt_message.save()
 
         filtered_keys = ['desc',
-                         'order-id',
+                         'order_id',
                          'amount',
                          'currency',
                          'amount_bch',
                          'address',
-                         'callback',
+                         'callback_url',
+                         'return_url',
                          'created_at']
         
         filtered_params = {key: value for key, value in input_params.items() if key in filtered_keys}
@@ -287,6 +294,12 @@ class PayAPIView(APIView):
         query_params = {key: request.GET.get(key) for key in request.GET.keys()}
 
         # return Response(query_params)
+        return_url = query_params.get('return_url')
+        
+        check_return_parameters(query_params.get('order_id'), query_params.get('callback_url'))
+
+        if not return_url:
+            return_url=""
     
         try:
             transaction = Transaction.objects.only('paid').get(recipient=query_params['address'])
@@ -294,27 +307,33 @@ class PayAPIView(APIView):
 
             query_params['paid'] = is_address_paid
 
+            # if is_address_paid:
+            #     if is_key_empty(order_id) or is_key_empty(callback_url):
+            #         return Response({'message': 'Missing Parameters'})
+                
+            #     order = {
+            #         'order_id': order_id,
+            #         'redirect_url': redirect_url,
+            #         'status': 'PAID'
+            #     }
+
+            #     requests.post(callback_url, json=order)
+            if is_key_empty(query_params.get('order_id')) or is_key_empty(query_params.get('callback_url')):
+                return Response(query_params)
+            
+            else:
+                if is_address_paid:
+                    order = {
+                        'order_id': query_params['order_id'],
+                        'status': 'PAID'
+                    }
+                    requests.post(query_params['callback_url'], json=order)
+
             return Response(query_params)
         
         except Transaction.DoesNotExist:
             return Response({'status': 'errors'})
-        
-    def post(self, request):        
-        order_id = request.GET.get('order-id')
-        url = request.GET.get('callback')
-        if is_key_empty(order_id) or is_key_empty(url):
-            return Response({'message': 'Missing Parameters'})
-        
-        order = {
-            'order-id': order_id,
-            'status': 'PAID'
-        }
 
-        success = False
-        post = requests.post(url, json=order)
-        if post.status_code == 200: 
-            success = True
-        return success
 
 class testAPIView(APIView):
     posted_data = []
@@ -341,6 +360,11 @@ class testAPIView(APIView):
 ### HELPER FUNCTIONS ###
 
 # ---------------------------------------------------------------
+
+def check_return_parameters(order_id, callback_url):
+    if not order_id or not callback_url:
+            order_id=""
+            callback_url=""
 
 def is_key_empty(key):
     return key is None or key == ''

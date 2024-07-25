@@ -8,18 +8,19 @@
 <body>
     <form action="http://localhost:9000/pay/" target="_blank" method="get">
         <input type="hidden" name="token" value="3A6k4t99g0rLPaG2">
-        <input type="hidden" name="order-id" value="Order-1234">
+        <input type="hidden" name="order_id" value="Order-123456">
         <input type="hidden" name="amount" value="0.50">
         <input type="hidden" name="currency" value="PHP">
         <input type="hidden" name="desc" value="My First Order">
-        <input type="hidden" name="callback" value="paymentgatewayv2\test.html">
+        <input type="hidden" name="callback_url" value="http://localhost:8000/test/">
+        <input type="hidden" name="return_url" value="http://localhost:9000/">
         <button type="submit">Go to MyApp Pay With Additional Parameters</button>
     </form>
 
     <form action="http://localhost:9000/pay/" target="_blank" method="get">
     
         <input type="hidden" name="token" value="3A6k4t99g0rLPaG2">
-        <input type="hidden" name="amount" value="120">
+        <input type="hidden" name="amount" value="0.50">
         <input type="hidden" name="currency" value="PHP">
         <button type="submit">Go to MyApp Pay</button>
     
