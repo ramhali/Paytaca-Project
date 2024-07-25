@@ -1,74 +1,81 @@
 <template>
   <q-page class="q-pa-lg">
-    <div class="text-h2 q-my-md">
+    <div v-if="!loading">
+      <div class="text-h2 q-my-md">
       <label class="text-weight-regular">
         Dashboard
       </label>
-    </div>
-    <div class="dashboard q-my-lg row justify-evenly">
-      <q-card class="q-my-lg" flat >
-        <q-card-section class="q-pt-md q-pb-sm text-weight-bold"  style="width: 300px; background-color: #1e293b;  color: white;">
-          BCH VALUE
-        </q-card-section>
+      </div>
+      <div class="dashboard q-my-lg row justify-evenly">
+        <q-card class="q-my-lg" flat >
+          <q-card-section class="q-pt-md q-pb-sm text-weight-bold"  style="width: 250px; background-color: #1e293b;  color: white;">
+            BCH VALUE
+          </q-card-section>
 
-        <q-card-section class=" " >
-           {{ currentBCH }}
-        </q-card-section>
-      </q-card>
+          <q-card-section class=" " >
+            {{ currentBCH }}
+          </q-card-section>
+        </q-card>
 
-      <q-card class="q-my-lg" flat>
-        <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 300px; background-color: #1e293b;  color: white;">
-          TOTAL INCOME
-        </q-card-section>
+        <q-card class="q-my-lg" flat>
+          <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 250px; background-color: #1e293b;  color: white;">
+            TOTAL INCOME
+          </q-card-section>
 
-        <q-card-section class="q-py-md ">
-          BCH {{ amount_total }}
-        </q-card-section>
-      </q-card>
+          <q-card-section class="q-py-md ">
+            BCH {{ amount_total }}
+          </q-card-section>
+        </q-card>
 
-      <q-card class="q-my-lg" flat>
-        <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 300px; background-color: #1e293b;  color: white;">
-          TRANSACTIONS DONE
-        </q-card-section>
+        <q-card class="q-my-lg" flat>
+          <q-card-section class="q-pt-md q-pb-sm text-weight-bold" style="width: 250px; background-color: #1e293b;  color: white;">
+            TRANSACTIONS COMPLETED
+          </q-card-section>
 
-        <q-card-section class="q-py-md ">
-          {{ transaction_count || 0 }}
-        </q-card-section>
-      </q-card>
-    </div>
+          <q-card-section class="q-py-md ">
+            {{ transaction_count || 0 }}
+          </q-card-section>
+        </q-card>
+      </div>
 
-    <div class="dashboard-table q-my-lg q-pt-lg">
-      <q-card flat style="background-color: transparent;">
-        <q-card-section>
-          <div class="text-h6">Recent Transactions</div>
-        </q-card-section>
+      <div class="dashboard-table q-my-lg q-pt-lg">
+        <q-card flat style="background-color: transparent;">
+          <q-card-section>
+            <div class="text-h6">Recent Transactions</div>
+          </q-card-section>
 
-        <q-card-section class="q-px-lg">
-          <q-table
-            :rows="data"
-            :columns="columns"
-            :hide-pagination="true"
-            flat
-            row-key="id"
-            separator="horizontal"
-            draggable="false"
-            class="medium-text"
-            no-data-label="Connect wallet on account info tab to start selling"
-            style="background-color: transparent"
-          >
-            <template v-slot:body-cell-tx_id="props">
-              <q-td :props="props">
-                <div class="ellipsis">{{ props.row.tx_id }}</div>
-              </q-td>
-            </template>
-            <template v-slot:body-cell-recipient="props">
-              <q-td :props="props">
-                <div class="ellipsis">{{ props.row.recipient }}</div>
-              </q-td>
-            </template>
-          </q-table>
-        </q-card-section>
-      </q-card>
+          <q-card-section class="q-px-lg">
+            <div v-if="!data" style="font-size: 1.5em;">
+              No Data...
+            </div>
+
+            <q-table
+              v-else
+              :rows="data"
+              :columns="columns"
+              :hide-pagination="true"
+              flat
+              row-key="id"
+              separator="horizontal"
+              draggable="false"
+              class="medium-text"
+              no-data-label="Connect wallet on account info tab to start selling"
+              style="background-color: transparent"
+            >
+              <template v-slot:body-cell-tx_id="props">
+                <q-td :props="props">
+                  <div class="ellipsis">{{ props.row.tx_id }}</div>
+                </q-td>
+              </template>
+              <template v-slot:body-cell-recipient="props">
+                <q-td :props="props">
+                  <div class="ellipsis">{{ props.row.recipient }}</div>
+                </q-td>
+              </template>
+            </q-table>
+          </q-card-section>
+        </q-card>
+      </div>
     </div>
   </q-page>
 </template>
@@ -78,6 +85,8 @@ import { useAuthStore } from 'src/stores/auth';
 import { api } from 'src/boot/axios';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { date } from 'quasar';
+
+const loading = ref(true);
 
 const authStore = useAuthStore();
 const token = authStore.getToken();
@@ -139,16 +148,16 @@ const fetchTransactions = async () => {
         'Content-Type': 'application/json',
       }
     });
-
-    console.log("Response: ",response);
+    // console.log("Response: ",response);
     data.value = response.data.table;
 
     amount_total.value = response.data.amount_total;
     transaction_count.value = response.data.transaction_count;
 
-    console.log("Amount Total", amount_total.value, "\nTransaction Count:", transaction_count.value);
+    loading.value = false;
 
-    console.log("Data: ", data.value);
+    // console.log("Amount Total", amount_total.value, "\nTransaction Count:", transaction_count.value);
+    // console.log("Data: ", data.value);
   } catch (error) {
     console.error("Error fetching transactions: ", error);
   }
@@ -182,7 +191,7 @@ const pollData = () => {
 };
 
 onMounted(() => {
-  pollData(); // Initial fetch
+  pollData();
   console.log("mounted");
   pollTimer.value = setInterval(pollData, 60000); // Poll every 60 seconds
 });
@@ -234,7 +243,7 @@ onUnmounted(() => {
 }
 
 .dashboard {
-  font-size: 1.5em;
+  font-size: 1.2em;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 </style>
