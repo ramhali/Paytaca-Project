@@ -13,11 +13,10 @@
             separator="horizontal"
             draggable="false"
             class="medium-text"
-            style="border: 2px solid #eff6ff;"
-
+            flat bordered
           >
             <template v-slot:body-cell-tx_id="props">
-              <q-td :props="props">
+              <q-td :props="props" class="fixed-widthtx">
                 <div class="ellipsis">{{ props.row.tx_id }}</div>
               </q-td>
             </template>
@@ -27,7 +26,7 @@
               </q-td>
             </template>
             <template v-slot:body-cell-status="props">
-              <q-td :props="props">
+              <q-td :props="props" class="fixed-width">
                 <div :class="['status', props.row.paid ? 'paid' : 'pending']">
                   {{ props.row.paid ? 'Paid' : 'Pending' }}
                 </div>
@@ -50,47 +49,56 @@ const authStore = useAuthStore();
 const token = authStore.getToken();
 const data = ref([]);
 
-const formatDate = (val) => date.formatDate(val, 'MM/DD/YYYY HH:mm:ss');
+const formatDate = (val) => { 
+  const dateObj = new Date(val); 
+  return dateObj.toLocaleString('en-US', { 
+    timeZone: 'GMT',
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit', 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+  }); 
+};
 
 const columns = [
-  { name: 'tx_id', align: 'center', label: 'Transaction ID', field: 'tx_id', headerClasses: 'bg-grey-1 header-text',
-    classes: 'bg-grey-1',
+  { name: 'tx_id', align: 'center', label: 'Transaction ID', field: 'tx_id',
     style: {
       fontSize: '1em'
     }
   },
-  { name: 'amount_fiat', align: 'center', label: 'Amount Fiat', field: 'amount_fiat', sortable: true, headerClasses: 'bg-grey-1 header-text',
-    classes: 'bg-grey-1',
+  { name: 'order_id', align: 'center', label: 'Order ID', field: 'order_id',
+    style: { 
+      fontSize: '1.2em' 
+    } 
+  },
+  { name: 'amount_fiat', align: 'center', label: 'Amount Fiat', field: 'amount_fiat', sortable: true,
+    style: {
+      fontSize: '1em'
+    }
+  },
+  { name: 'currency', align: 'center', label: 'Currency', field: 'currency',
     style: {
       fontSize: '1.1em'
     }
   },
-  { name: 'currency', align: 'center', label: 'Currency', field: 'currency', headerClasses: 'bg-grey-1 header-text',
-    classes: 'bg-grey-1',
+  { name: 'amount_bch', align: 'center', label: 'Amount (BCH)', field: 'amount_bch', sortable: true,
     style: {
       fontSize: '1.1em'
     }
   },
-  { name: 'amount_bch', align: 'center', label: 'Amount (BCH)', field: 'amount_bch', sortable: true, headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
+  { name: 'recipient', align: 'center', label: 'Recipient', field: 'recipient',
     style: {
       fontSize: '1.1em'
     }
   },
-  { name: 'recipient', align: 'center', label: 'Recipient', field: 'recipient', headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
+  { name: 'date', align: 'center', label: 'Date', field: 'created_at', format: formatDate,
     style: {
-      fontSize: '1.1em'
+      fontSize: '1em'
     }
   },
-  { name: 'date', align: 'center', label: 'Date', field: 'created_at', format: formatDate, headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
-    style: {
-      fontSize: '1.1em'
-    }
-  },
-  { name: 'status', align: 'center', label: 'Status', field: 'paid', headerClasses: 'bg-grey-1 header-text' ,
-    classes: 'bg-grey-1',
+  { name: 'status', align: 'center', label: 'Status', field: 'paid',
     style: {
       fontSize: '1.1em'
     }
@@ -146,8 +154,21 @@ onMounted(() => {
   padding: 0.5em;
   border-radius: 20px;
   text-align: center;
-  font-weight: bold;
   color: white;
+}
+
+.fixed-width {
+  width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fixed-widthtx {
+  width: 185px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .paid {

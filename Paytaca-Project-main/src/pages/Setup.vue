@@ -31,7 +31,7 @@
             <q-card-section>
               <q-img src="https://cdn.quasar.dev/img/parallax2.jpg" style="width: 300px; height: auto;">
                 <div class="absolute-bottom text-h6">
-                  <a href="/">Pay with Paytaca</a>
+                  <a href="#">Pay with Paytaca</a>
                 </div>
               </q-img>
             </q-card-section>
@@ -146,6 +146,11 @@
                 { name: 'ex', label: 'Example', align: 'left', field: 'ex', sortable: false }
                 ],
                 rows: [
+                {
+                  name: 'action',
+                  desc: 'The payment gateway website, where the user will be redirected after opting to pay in BCH',
+                  ex: 'http://localhost:9000/pay/' 
+                },
                 {
                     name: 'token',
                     desc: 'Your unique account token, which can be viewed in the account information tab after you connect your wallet',

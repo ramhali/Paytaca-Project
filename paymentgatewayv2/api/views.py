@@ -43,8 +43,9 @@ class AccountViewAPI(APIView):
 
         if transaction.exists():
             table_serializer = serializers.OrderSerializer(recent_transaction, many=True)
+            return Response({"account": account_serializer.data, "transaction_count": transaction_count, "amount_total": total_transaction_amount, "table": table_serializer.data})
         
-        return Response({"account": account_serializer.data, "transaction_count": transaction_count, "amount_total": total_transaction_amount, "table": table_serializer.data})
+        return Response({"account": account_serializer.data, "transaction_count": transaction_count, "amount_total": total_transaction_amount})
 
         
 
@@ -347,7 +348,7 @@ class testAPIView(APIView):
     def get(self, request):
         # Return the saved posted data
         if testAPIView.posted_data is not None:
-            return Response({'status': 'success', 'data': testAPIView.posted_data})
+            return Response({'data': testAPIView.posted_data})
         else:
             return Response({'status': 'error', 'message': 'No data posted yet'}, status=404)
      
