@@ -3,7 +3,6 @@
     <div class="flex justify-center">
       <q-card class="q-pa-md text-justify bg-accent text-primary" style="width: 450px" color="accent">
         <h3 class="text-center">Paytaca BCH Gateway</h3>
-        <!-- <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Officia odit corporis voluptate eos magni numquam. Provident assumenda dolore, autem maxime eveniet, cum culpa hic minima eum pariatur, ducimus fugit velit.</p> -->
          <p>
           As the preferred choice for BCH enthusiasts globally, Paytaca is poised to lead the charge in introducing billions to the utility of BCH over traditional currencies, both fiat and crypto. With its unwavering commitment to accessibility, security, and innovation, Paytaca stands as the quintessential tool for navigating the evolving landscape of peer-to-peer digital transactions.
          </p>
@@ -118,15 +117,21 @@
   import {api} from 'boot/axios'
   import { useQuasar } from 'quasar'
   import { useRouter } from 'vue-router';
+  import { useAuthStore } from 'src/stores/auth';
 
   const $q = useQuasar()
   const router = useRouter()
+  const authStore = useAuthStore()
 
   const user = ref({
     username:null,
     store_name: null,
     password1: null,
     password2: null,
+  })
+  const loginData = ref({
+    username:null,
+    password: null,
   })
 
   const onSubmit = async () => {
@@ -141,7 +146,11 @@
             message: 'User Registered Successfully!',
             timeout: 2000
             })
-            router.replace('/')
+            // router.replace('/')
+            loginData.value.username = user.value.username
+            loginData.value.password = user.value.password1
+            console.log("Login Data:", loginData.value);
+            Login()
           }
           else{
             for (let index in response.data.errors.username){
@@ -178,6 +187,47 @@
           }
         )
   }
+  const Login = async () => {
+  try {
+    const csrfToken = window.csrfToken;
+    const response = await api.post('login/', loginData.value, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      },
+      withCredentials: true
+    });
+    console.log("Login Response: ",response.data);
+
+    if (response.data.status !== 'errors') {
+      authStore.login(response.data.token, response.data.username);
+      $q.notify({
+        type: 'positive',
+        icon: 'cloud_done',
+        message: 'User logged in successfully!',
+        timeout: 2000
+      });
+      router.replace('/account');
+    } else {
+      $q.notify({
+        type: 'negative',
+        icon: 'error',
+        message: `${response.data.errors}`,
+        timeout: 2000
+      });
+      console.log(response.data);
+    }
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      $q.notify({
+        type: 'negative',
+        icon: 'error',
+        message: 'Incorrect Username or Password',
+        timeout: 2000
+      });
+    }
+    console.error(error);
+  }
+};
 
   const onReset = () => {
     user.value=ref(null)
