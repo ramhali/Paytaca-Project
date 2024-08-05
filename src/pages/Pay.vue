@@ -1,8 +1,8 @@
 <template>
   <q-page class="flex flex-center justify-center">
     <q-form v-if="!loading" @submit="submitForm">
-      <div>
-        <q-card style="min-width: 400px;">
+      <div >
+        <q-card v-if="!showFields" style="min-width: 400px;">
           <q-card-section>
             <label class="text-weight-bold">User Token</label>
             <q-input
@@ -24,10 +24,6 @@
               :rules="[(val) => !!val || 'Amount cannot be empty']"
             />
           </q-card-section>
-
-          <!-- <q-badge color="accent">
-            Model : {{ urldata.currency }}
-          </q-badge> -->
 
           <q-card-section>
             <label class="text-weight-bold">Currency</label>
@@ -68,6 +64,7 @@ const $q = useQuasar();
 const router = useRouter()
 const urlstore = useURLStore();
 const loading = ref(true)
+const showFields = ref(true)
 
 const urldata = ref({
   token: '',
@@ -119,7 +116,6 @@ const fetchURL = async () => {
     loading.value=false;
     router.replace('/pay/payredirect');
 
-    // $q.notify({ type: 'positive', message: 'URL fetched successfully!' });
   } catch (error) {
     console.error(error);
     $q.notify({ type: 'negative', message: 'Failed to fetch URL!' });

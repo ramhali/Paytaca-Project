@@ -101,6 +101,7 @@ import { computed, onBeforeUnmount, onMounted, onUnmounted, ref, watch } from 'v
 import { useURLStore } from 'src/stores/urlstore';
 import { useQuasar } from 'quasar';
 
+// ------------------- VARIABLES ------------------ //
 const urlstore = useURLStore();
 const url = urlstore.getUrl;
 const $q = useQuasar();
@@ -124,6 +125,7 @@ const isPaid = ref(false);
 const isExpired = ref(false);
 const countdown = ref(0);
 
+// -------------------------- FUNCTIONS -------------------- //
 const getResponse = async () => {
   try {
     const response = await api.get(`${url}`);
@@ -247,16 +249,17 @@ watch(isPaid, (newVal) => {
   } else return
 });
 
+// -------------------------- LIFECYCLE HOOKS ---------------------- //
+
 onMounted(() => {
   getResponse();
-  pollTimer.value = setInterval(checkPaymentStatus, 5000); // Poll every 5 seconds
+  pollTimer.value = setInterval(checkPaymentStatus, 2000); // Poll every 5 seconds
 });
 
 onUnmounted(() => {
   stopTimers();
   urlstore.removeURL();
 });
-
 
 </script>
 

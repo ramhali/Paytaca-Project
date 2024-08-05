@@ -66,7 +66,7 @@ const data = ref([]);
 const formatDate = (val) => {
   const dateObj = new Date(val);
   return dateObj.toLocaleString('en-US', {
-    timeZone: 'GMT', // or your preferred time zone
+    timeZone: 'GMT',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -161,7 +161,6 @@ onMounted(() => {
 
 .table-title {
   font-size: 2em;
-  /* text-align: center; */
   font-weight: bold;
   margin-bottom: 1em;
 }

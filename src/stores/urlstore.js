@@ -8,7 +8,6 @@ export const useURLStore = defineStore('urlstore', {
     storeURL(url){
       this.url = url
       localStorage.setItem('url', this.url);
-      // console.log(this.url);
     },
     removeURL(url){
       this.url = null
@@ -17,7 +16,6 @@ export const useURLStore = defineStore('urlstore', {
   },
   getters: {
     getUrl (){
-      // console.log("urlstore.js (getterURL): ",this.url);
       return this.url
     }
   }
