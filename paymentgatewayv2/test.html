@@ -1,3 +1,4 @@
+<!-- bitcoincash:qzncwz9enkxv8kq3pfln5w9xcrhqu73ntc8xdpmgqm -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,14 +6,29 @@
     <title>Redirect to MyApp</title>
 </head>
 <body>
-    <form action="http://localhost:8000/pay/" method="get">
-        <input type="hidden" name="token" value="4tDFHEJsPxLcCtvn">
-        <!-- <input type="hidden" name="xpub" value='xpub6CzFUctiBhxUDghvAVeio9HCy2XrfrCgSuPsF8iKyC9GcYqvGHhVSqkMMqjE8MnDq8X94a7NSFrFGnqFQFhg1Z86QsZZXbFWzhmBNhgLc9h'> -->
-        <!-- <input type="hidden" name="index" value="311"> -->
-        <input type="hidden" name="amount" value="111.50">
+    <form action="http://localhost:9000/pay/" target="_blank" method="get">
+        <input type="hidden" name="token" value="3A6k4t99g0rLPaG2">
+        <input type="hidden" name="order_id" value="Order-123456">
+        <input type="hidden" name="amount" value="0.50">
         <input type="hidden" name="currency" value="PHP">
         <input type="hidden" name="desc" value="My First Order">
-        <button type="submit">Go to MyApp Pay</button>
+        <input type="hidden" name="callback_url" value="http://localhost:8000/test/">
+        <input type="hidden" name="return_url" value="http://localhost:9000/">
+        <button type="submit">Go to MyApp Pay With Additional Parameters</button>
     </form>
+
+    <form action="http://localhost:9000/pay/" target="_blank" method="get">
+    
+        <input type="hidden" name="token" value="3A6k4t99g0rLPaG2">
+        <input type="hidden" name="amount" value="0.50">
+        <input type="hidden" name="currency" value="PHP">
+        <button type="submit">Go to MyApp Pay</button>
+    
+    </form>
+
+    <a href="http://localhost:9000/pay/?token=3A6k4t99g0rLPaG2&amp;amount=0.25&amp;currency=PHP&amp;desc=Your+Product"> 
+        Pay with BCH 
+    </a>
+
 </body>
 </html>

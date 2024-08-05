@@ -13,4 +13,6 @@ urlpatterns = [
     path('pay/', views.PayRedirectAPIView.as_view(), name='pay_redirect'),
     path('pay/redirected', views.PayAPIView.as_view(), name='pay'),
 
+    path('test/', views.testAPIView.as_view(), name="test"),
+
 ]

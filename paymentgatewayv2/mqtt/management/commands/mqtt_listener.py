@@ -3,6 +3,8 @@ import paho.mqtt.client as mqtt
 import json
 import time
 
+from decimal import Decimal
+
 from accounts.models import Transaction
 
 
@@ -34,10 +36,13 @@ def on_message(client, userdata, msg):
 
         transaction.transaction_token = transaction_token
         transaction.tx_id = tx_id
-        transaction.amount_bch = amount_bch
-        transaction.paid = True
+        transaction.amount_paid += Decimal(amount_bch/100000000)
+
+        if transaction.amount_paid >= transaction.amount_bch:
+            transaction.paid = True
 
         transaction.save()
+
     except Transaction.DoesNotExist:
             print("Transaction with the specified recipient does not exist.")
 
