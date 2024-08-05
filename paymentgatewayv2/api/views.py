@@ -15,7 +15,7 @@ from rest_framework.decorators import permission_classes
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 
@@ -180,10 +180,9 @@ class OrderViewAPI(APIView):
         
     def put(self, request):
         address = request.data.get('address')
-        print(address)
+        # print(address)
         try:
             transaction = Transaction.objects.get(recipient=address)
-            # transaction.amount = new_amount_bch
             currency = transaction.currency
             amount = transaction.amount_fiat
             transaction.amount_bch = get_bch_rate(currency, amount)
@@ -214,7 +213,6 @@ class OrderViewAPI(APIView):
 class PayRedirectAPIView(APIView):
     def get(self, request, *args, **kwargs):
         input_params = request.GET.dict()
-        print(input_params)
         payment_currency = input_params.get('currency')
         total_fiat = input_params.get('amount')
 
@@ -234,10 +232,7 @@ class PayRedirectAPIView(APIView):
         if not return_url:
             return_url=""
 
-        index = get_available_address_index(token)
-        print("INDEX IS: ")
-        print(index)
-
+        index = get_available_address_index()
 
         try:
             address = get_address_from_index(token, index)
@@ -304,23 +299,13 @@ class PayAPIView(APIView):
         if not return_url:
             return_url=""
     
+        # print(query_params.get('address'))
         try:
-            transaction = Transaction.objects.only('paid').get(recipient=query_params['address'])
+            transaction = Transaction.objects.only('paid').get(recipient=query_params.get('address'))
             is_address_paid = transaction.paid
 
             query_params['paid'] = is_address_paid
 
-            # if is_address_paid:
-            #     if is_key_empty(order_id) or is_key_empty(callback_url):
-            #         return Response({'message': 'Missing Parameters'})
-                
-            #     order = {
-            #         'order_id': order_id,
-            #         'redirect_url': redirect_url,
-            #         'status': 'PAID'
-            #     }
-
-            #     requests.post(callback_url, json=order)
             if is_key_empty(query_params.get('order_id')) or is_key_empty(query_params.get('callback_url')):
                 return Response(query_params)
             
@@ -394,7 +379,7 @@ def get_bch_rate(currency, amount):
         # round to 8 decimal places
         total_bch = total_bch.quantize(Decimal('1.00000000'), rounding=ROUND_HALF_UP)
 
-        print(total_bch)
+        # print(total_bch)
 
     return total_bch
 
@@ -414,45 +399,30 @@ def get_wallethash_by_token(token):
 # ---------------------------------------------------------------
 
 # Get the available index
-def get_available_address_index(token):
-    # try:
-    #     max_index_transaction = Transaction.objects.filter(account_token=token).order_by('-address_index').first()
-    #     max_index = max_index_transaction.address_index if max_index_transaction else 0
-    #     available_index = max_index + 1
-    #     return available_index
-    # except:
-    #     return 0
-    max_index_transaction = Transaction.objects.filter(account_token=token).order_by('-address_index').first()
-    print(max_index_transaction)
+def get_available_address_index():
+    max_index_transaction = Transaction.objects.order_by('-address_index').first()
     if max_index_transaction is not None:
-        print("max_index_transaction is not NONE!")
         max_index = max_index_transaction.address_index
         available_index = max_index + 1
-        print(available_index)
         return available_index
     else:
-        print("max_index_transaction is NONE!")
         return 0
         
 # Check if the address already exists in database by using index
-def if_index_exists(token_value, index_value):
-    return Transaction.objects.filter(account_token=token_value).filter(address_index=index_value).exists()
+def if_index_exists(index_value):
+    return Transaction.objects.filter(address_index=index_value).exists()
 
 # ----------------------------------------------------------------
 
 # Get a new adress based on xpub and index
 def get_address_from_index(token, param_index):
     index = param_index
-    print("INSIDE get_address_from_index")
-    print(index)
     while True:
-        print("INSIDE TRUE")
         wallet = HDWallet(symbol=SYMBOL, use_default_path=False)
         result = wallet.from_xpublic_key(get_xpub_by_token(token)).from_path(f"m/0/{index}").dumps()
         legacy_format = result['addresses']['p2pkh']
         
-        if not if_index_exists(token, index):
-            print("INSIDE if_index_exists")
+        if not if_index_exists(index):
             return convert.to_cash_address(legacy_format)
         
         index = index + 1 

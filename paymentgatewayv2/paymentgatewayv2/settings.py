@@ -52,15 +52,15 @@ REST_FRAMEWORK = {
     ],
 
     # rate limiting
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.UserRateThrottle',
-        'rest_framework.throttling.AnonRateThrottle',
-    ],
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     'rest_framework.throttling.UserRateThrottle',
+    #     'rest_framework.throttling.AnonRateThrottle',
+    # ],
 
-    'DEFAULT_THROTTLE_RATES': {
-        'user': '100/day',
-        'anon': '10/minute',
-    } 
+    # 'DEFAULT_THROTTLE_RATES': {
+    #     'user': '1000/day',
+    #     'anon': '20/minute',
+    # } 
 }
 
 AUTH_USER_MODEL = "accounts.Account"
@@ -150,7 +150,16 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWED_ORIGINS = [ 
+    "http://localhost:9000", 
+    "http://localhost:9001",  
+] 
+CORS_ALLOW_CREDENTIALS = True 
+ 
+CSRF_TRUSTED_ORIGINS = [ 
+    "http://localhost:9000", 
+    'http://localhost:9001', 
+]
 
 LOGIN_REDIRECT_URL = "account-view"
 LOGOUT_REDIRECT_URL = "account-view"

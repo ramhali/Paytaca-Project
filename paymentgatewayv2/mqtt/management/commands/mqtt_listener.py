@@ -3,7 +3,7 @@ import paho.mqtt.client as mqtt
 import json
 import time
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from accounts.models import Transaction
 
@@ -38,8 +38,17 @@ def on_message(client, userdata, msg):
         transaction.tx_id = tx_id
         transaction.amount_paid += Decimal(amount_bch/100000000)
 
+        transaction.amount_paid=transaction.amount_paid.quantize(Decimal('1.00000000'), rounding=ROUND_HALF_UP)
+
+        # print(transaction.amount_paid, type(transaction.amount_paid))
+        # print(transaction.amount_bch, type(transaction.amount_bch))
+
         if transaction.amount_paid >= transaction.amount_bch:
             transaction.paid = True
+            # print(transaction.paid)
+            transaction.save()
+        else:
+            print("WARAY KABASA")
 
         transaction.save()
 
